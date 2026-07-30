@@ -22,18 +22,11 @@
         .clinical-panel { background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); }
         .clinical-title { font-weight: bold; color: #2c3e50; font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
         
-        /* CSS Art: เตียงและผู้ป่วย */
-        .bed-scene { position: relative; height: 180px; background: #dcdde1; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); }
-        .ventilator-machine { width: 50px; height: 110px; background: #2c3e50; border-radius: 5px; position: absolute; left: 15px; bottom: 20px; display: flex; flex-direction: column; align-items: center; padding-top: 5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
-        .vent-screen { width: 40px; height: 35px; background: #34495e; border-radius: 3px; border: 2px solid #1a252f; transition: background 0.1s, box-shadow 0.1s; }
-        .vent-tube { position: absolute; width: 80px; height: 60px; border-top: 6px solid #3498db; border-radius: 50%; top: 45px; left: 50px; z-index: 1; opacity: 0.8; }
-        
-        .patient { display: flex; align-items: center; position: absolute; right: 20px; bottom: 35px; z-index: 2; }
-        .patient-head { width: 45px; height: 50px; background: #f1c27d; border-radius: 50%; position: relative; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1); }
-        .patient-mask { position: absolute; width: 25px; height: 30px; background: rgba(255,255,255,0.6); border: 2px solid #3498db; border-radius: 10px; left: -10px; top: 10px; }
-        .patient-body { width: 130px; height: 55px; background: #ecf0f1; border-radius: 25px; margin-left: -5px; box-shadow: inset 0 -10px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; }
-        .patient-chest { width: 80px; height: 45px; background: rgba(52, 152, 219, 0.2); border-radius: 20px; display: flex; justify-content: center; align-items: center; transform-origin: center; will-change: transform; }
-        .patient-lungs { width: 50px; height: 25px; background: #e74c3c; border-radius: 10px; opacity: 0.4; will-change: opacity; }
+        /* CSS สำหรับส่วนรูปภาพ 2 ชั้น */
+        .bed-scene { position: relative; width: 100%; height: 200px; background: #dcdde1; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); }
+        .base-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        .vent-screen-light { position: absolute; left: 40px; bottom: 80px; width: 30px; height: 20px; background: #34495e; z-index: 2; border-radius: 3px; opacity: 0.8; transition: background 0.1s, box-shadow 0.1s; }
+        .chest-overlay { position: absolute; left: 120px; top: 90px; width: 80px; z-index: 3; transform-origin: center center; will-change: transform; }
 
         /* สถานะผู้ป่วย */
         .status-box { background: white; padding: 10px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; }
@@ -72,24 +65,16 @@
             <div class="clinical-panel">
                 <div class="clinical-title">🏥 Clinical Status & Patient</div>
                 
+                <!-- ส่วนแอนิเมชันรูปภาพ 2 ชั้น -->
                 <div class="bed-scene">
-                    <div class="ventilator-machine">
-                        <div class="vent-screen" id="ventScreen"></div>
-                        <div style="margin-top: 10px; width: 80%; height: 2px; background: #7f8c8d;"></div>
-                        <div style="margin-top: 5px; width: 80%; height: 2px; background: #7f8c8d;"></div>
-                    </div>
-                    <div class="vent-tube"></div>
-                    
-                    <div class="patient">
-                        <div class="patient-head">
-                            <div class="patient-mask"></div>
-                        </div>
-                        <div class="patient-body">
-                            <div class="patient-chest" id="patientChest">
-                                <div class="patient-lungs" id="patientLungs"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- รูปที่ 1: ภาพฐาน (คนไข้ เตียง เครื่องช่วยหายใจ รวมอยู่ในรูปเดียว) -->
+                    <img src="https://lh3.googleusercontent.com/d/17Nk7ardKgkWEWzQIn3mlwa_tmyPBzuJU" alt="Patient and Ventilator" class="base-image">
+
+                    <!-- ไฟสถานะหน้าจอเครื่องช่วยหายใจ (ปรับ left/bottom ให้ตรงกับตำแหน่งหน้าจอในรูปที่ 1) -->
+                    <div id="ventScreen" class="vent-screen-light"></div>
+
+                    <!-- รูปที่ 2: ภาพหน้าอกสำหรับขยับ (Overlay) (ปรับ left/top/width ให้ทับหน้าอกในรูปที่ 1 พอดี) -->
+                    <img id="patientChest" src="https://lh3.googleusercontent.com/d/1cJIeJOsBGyehmFPO9bgJv7n-RvXfymNz" alt="Animated Chest" class="chest-overlay">
                 </div>
 
                 <div class="status-box">
@@ -102,7 +87,7 @@
             <canvas id="ventCanvas" width="850" height="380"></canvas>
         </div>
 
-        <!-- แผงควบคุม (เหมือนเดิม) -->
+        <!-- แผงควบคุม -->
         <div class="control-panel">
             <div class="control-group">
                 <label>1. โหมด (Mode):</label>
@@ -159,8 +144,8 @@
     </div>
 
     <script>
-        // === การดึง API จาก GAS (คงเดิม) ===
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ของคุณ
+        // === การดึง API จาก GAS ===
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ของคุณตรงนี้
 
         async function fetchSettingsFromGAS() {
             try {
@@ -182,7 +167,7 @@
         }
         window.onload = fetchSettingsFromGAS;
 
-        // === ส่วนประมวลผลกราฟและแอนิเมชันผู้ป่วย ===
+        // === ส่วนประมวลผลกราฟและแอนิเมชันรูปภาพ ===
         const canvas = document.getElementById('ventCanvas');
         const ctx = canvas.getContext('2d');
         let t = 0; 
@@ -263,13 +248,12 @@
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
             // ==========================================
-            // อัปเดต Clinical Animation ให้ตรงกับกราฟขวาสุด
+            // อัปเดต Clinical Animation (สั่งขยายรูปภาพหน้าอก)
             // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
             
             let chestEl = document.getElementById('patientChest');
-            let lungsEl = document.getElementById('patientLungs');
             let ventScreen = document.getElementById('ventScreen');
             let phaseBadge = document.getElementById('breathPhaseBadge');
             let statusTextEl = document.getElementById('clinicalStatusText');
@@ -277,17 +261,16 @@
             if (phase === 'Insp') {
                 let progress = rightEdgeTime / tiLength; // 0.0 to 1.0
                 
-                // คำนวณแรงพยายามหายใจ (Effort) จากความผิดปกติ
+                // คำนวณแรงพยายามหายใจ (Effort)
                 let effortMultiplier = 1;
                 if(abnormal === 'scoop_mild') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.05;
                 if(abnormal === 'scoop_severe') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.15;
 
-                // ขยายหน้าอกและปอดสว่างขึ้น
+                // สั่งขยาย "รูปภาพหน้าอก" (Overlay)
                 let scaleVal = 1 + (0.15 * progress) * effortMultiplier;
                 chestEl.style.transform = `scale(${scaleVal})`;
-                lungsEl.style.opacity = 0.4 + (0.6 * progress);
 
-                // ไฟเครื่อง Vent สว่าง (จ่ายอากาศ)
+                // ไฟเครื่อง Vent สว่าง (ถ้ากำหนดให้แสดงไฟ)
                 ventScreen.style.background = '#2ecc71';
                 ventScreen.style.boxShadow = '0 0 15px #2ecc71';
                 
@@ -301,18 +284,15 @@
 
                 // หาก Auto-PEEP หน้าอกยุบไม่สุด
                 let baseScale = 1.0;
-                let baseOpacity = 0.4;
                 if(abnormal === 'autopeep') {
                     baseScale = 1.05; 
-                    baseOpacity = 0.55;
                 }
 
-                // การยุบตัวเป็นกราฟ Exponential ให้ดูเป็นธรรมชาติ
+                // การยุบตัวเป็นกราฟ Exponential ให้รูปขยับดูเป็นธรรมชาติ
                 let decay = Math.exp(-progress * 6); 
                 chestEl.style.transform = `scale(${baseScale + (0.15 * decay)})`;
-                lungsEl.style.opacity = baseOpacity + ((1 - baseOpacity) * decay);
 
-                // ไฟเครื่อง Vent ดับ (พัก)
+                // ไฟเครื่อง Vent ดับ
                 ventScreen.style.background = '#34495e';
                 ventScreen.style.boxShadow = 'none';
 
