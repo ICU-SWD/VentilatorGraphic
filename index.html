@@ -2,46 +2,107 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Ventilator Simulator (Pro & Logo)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <title>Ventilator Simulator (Pro & Clinical View)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #2c3e50; text-align: center; padding: 20px; margin: 0; color: #333; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); max-width: 950px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #1a252f; text-align: center; padding: 20px; margin: 0; color: #333; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); max-width: 1250px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
         
         /* ส่วนหัวและโลโก้ */
         .header-box { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; position: relative; }
-        .hospital-logo { height: 70px; position: absolute; left: 10px; } /* ปรับขนาดโลโก้ตรงนี้ */
+        .hospital-logo { height: 70px; position: absolute; left: 10px; }
         .header-text { display: flex; flex-direction: column; align-items: center; }
-        .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 24px; }
-        .subtitle { color: #7f8c8d; font-size: 14px; margin: 0; }
+        .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 26px; font-weight: 700; }
+        .subtitle { color: #7f8c8d; font-size: 15px; margin: 0; }
 
-        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #ecf0f1; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 20px; border: 1px solid #bdc3c7; }
-        .control-group { display: flex; flex-direction: column; align-items: flex-start; margin: 5px; flex: 1 1 180px; }
+        /* เลย์เอาต์หลัก ซ้าย (คนไข้) - ขวา (กราฟ) */
+        .main-display { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
+        
+        /* แผงจำลองคนไข้ทางคลินิก */
+        .clinical-panel { background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); }
+        .clinical-title { font-weight: bold; color: #2c3e50; font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
+        
+        /* CSS Art: เตียงและผู้ป่วย */
+        .bed-scene { position: relative; height: 180px; background: #dcdde1; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); }
+        .ventilator-machine { width: 50px; height: 110px; background: #2c3e50; border-radius: 5px; position: absolute; left: 15px; bottom: 20px; display: flex; flex-direction: column; align-items: center; padding-top: 5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+        .vent-screen { width: 40px; height: 35px; background: #34495e; border-radius: 3px; border: 2px solid #1a252f; transition: background 0.1s, box-shadow 0.1s; }
+        .vent-tube { position: absolute; width: 80px; height: 60px; border-top: 6px solid #3498db; border-radius: 50%; top: 45px; left: 50px; z-index: 1; opacity: 0.8; }
+        
+        .patient { display: flex; align-items: center; position: absolute; right: 20px; bottom: 35px; z-index: 2; }
+        .patient-head { width: 45px; height: 50px; background: #f1c27d; border-radius: 50%; position: relative; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1); }
+        .patient-mask { position: absolute; width: 25px; height: 30px; background: rgba(255,255,255,0.6); border: 2px solid #3498db; border-radius: 10px; left: -10px; top: 10px; }
+        .patient-body { width: 130px; height: 55px; background: #ecf0f1; border-radius: 25px; margin-left: -5px; box-shadow: inset 0 -10px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; }
+        .patient-chest { width: 80px; height: 45px; background: rgba(52, 152, 219, 0.2); border-radius: 20px; display: flex; justify-content: center; align-items: center; transform-origin: center; will-change: transform; }
+        .patient-lungs { width: 50px; height: 25px; background: #e74c3c; border-radius: 10px; opacity: 0.4; will-change: opacity; }
+
+        /* สถานะผู้ป่วย */
+        .status-box { background: white; padding: 10px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; }
+        .status-box p { margin: 5px 0; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
+        
+        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
+        
+        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; }
+        .control-group { display: flex; flex-direction: column; align-items: flex-start; margin: 5px; flex: 1 1 160px; }
         
         label { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 6px; }
         select, input[type="range"] { padding: 8px; border-radius: 6px; border: 1px solid #95a5a6; font-family: 'Sarabun', sans-serif; width: 100%; box-sizing: border-box; font-size: 14px; background: white; }
         
-        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
-        
-        .btn-capture { background-color: #e74c3c; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 25px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: background 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .btn-capture:hover { background-color: #c0392b; }
+        .btn-capture { background-color: #2980b9; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 25px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: background 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .btn-capture:hover { background-color: #1c5981; }
         .status-msg { font-size: 14px; color: #27ae60; margin-top: 10px; font-weight: bold; height: 20px; }
-        
-        .info-badge { background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- ส่วนหัว -->
         <div class="header-box">
             <img src="https://lh3.googleusercontent.com/d/1DlsLtw43ZhgFrmvjS6ySFH4EmSwuS0tk" alt="Hospital Logo" class="hospital-logo">
-            
             <div class="header-text">
-                <h2 class="header-title">ระบบจำลองกราฟเครื่องช่วยหายใจ</h2>
+                <h2 class="header-title">ระบบจำลองกราฟเครื่องช่วยหายใจ (Ventilator & Clinical Sim)</h2>
                 <div class="subtitle">สื่อการเรียนรู้อิเล็กทรอนิกส์ (E-Learning) พัฒนาโดย นายปฏิยุทธ์ อุปพงษ์</div>
             </div>
         </div>
         
+        <!-- เลย์เอาต์หลัก แสดงผลตรงกลาง -->
+        <div class="main-display">
+            
+            <!-- แผงจำลองคนไข้ (Clinical View) -->
+            <div class="clinical-panel">
+                <div class="clinical-title">🏥 Clinical Status & Patient</div>
+                
+                <div class="bed-scene">
+                    <div class="ventilator-machine">
+                        <div class="vent-screen" id="ventScreen"></div>
+                        <div style="margin-top: 10px; width: 80%; height: 2px; background: #7f8c8d;"></div>
+                        <div style="margin-top: 5px; width: 80%; height: 2px; background: #7f8c8d;"></div>
+                    </div>
+                    <div class="vent-tube"></div>
+                    
+                    <div class="patient">
+                        <div class="patient-head">
+                            <div class="patient-mask"></div>
+                        </div>
+                        <div class="patient-body">
+                            <div class="patient-chest" id="patientChest">
+                                <div class="patient-lungs" id="patientLungs"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-box">
+                    <p>ระยะการหายใจ: <span id="breathPhaseBadge" class="badge" style="background:#95a5a6;">Wait</span></p>
+                    <p>อาการคนไข้: <br><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 15px;">ปกติ (Synchronized)</span></p>
+                </div>
+            </div>
+
+            <!-- กราฟ Waveform -->
+            <canvas id="ventCanvas" width="850" height="380"></canvas>
+        </div>
+
+        <!-- แผงควบคุม (เหมือนเดิม) -->
         <div class="control-panel">
             <div class="control-group">
                 <label>1. โหมด (Mode):</label>
@@ -78,7 +139,7 @@
             </div>
 
             <div class="control-group">
-                <label>เวลาหายใจเข้า (Ti): <span id="tiVal" style="color:#e74c3c;">1.0</span> s <span class="info-badge" id="ieRatio">I:E = 1:3.0</span></label>
+                <label>เวลาหายใจเข้า (Ti): <span id="tiVal" style="color:#e74c3c;">1.0</span> s <br><span class="badge" style="background:#3498db;" id="ieRatio">I:E = 1:3.0</span></label>
                 <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1)">
             </div>
 
@@ -92,55 +153,39 @@
                 <input type="range" id="slopeSlider" min="0" max="10" value="0" oninput="document.getElementById('slopeVal').innerText = this.value">
             </div>
         </div>
-        
-        <canvas id="ventCanvas" width="850" height="380"></canvas>
 
         <button class="btn-capture" onclick="saveGraph()">📸 บันทึกภาพกราฟ (PNG)</button>
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
     <script>
-        // === ส่วนเชื่อมต่อ GAS API ===
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ให้ตรงกับที่คุณ Deploy ไว้
+        // === การดึง API จาก GAS (คงเดิม) ===
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ของคุณ
 
         async function fetchSettingsFromGAS() {
             try {
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
-                
                 if(data.status === "success") {
-                    console.log(data.message);
-                    
-                    // นำข้อมูลจาก API มาอัปเดต UI 
                     document.getElementById('modeSelect').value = data.defaultSettings.mode;
                     document.getElementById('flowSelect').value = data.defaultSettings.flowType;
-                    
                     document.getElementById('rrSlider').value = data.defaultSettings.rr;
                     document.getElementById('rrVal').innerText = data.defaultSettings.rr;
-                    
                     document.getElementById('tiSlider').value = data.defaultSettings.ti;
                     document.getElementById('tiVal').innerText = parseFloat(data.defaultSettings.ti).toFixed(1);
-                    
                     document.getElementById('piSlider').value = data.defaultSettings.pi;
                     document.getElementById('piVal').innerText = data.defaultSettings.pi;
-                    
                     document.getElementById('slopeSlider').value = data.defaultSettings.slope;
                     document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
                 }
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ GAS API:", error);
-            }
+            } catch (error) { console.error("API Fetch Error (สามารถใช้งานต่อได้แบบ Offline):", error); }
         }
-
-        // ดึงข้อมูลตอนเปิดหน้าเว็บ
         window.onload = fetchSettingsFromGAS;
-        // ==============================
 
+        // === ส่วนประมวลผลกราฟและแอนิเมชันผู้ป่วย ===
         const canvas = document.getElementById('ventCanvas');
         const ctx = canvas.getContext('2d');
         let t = 0; 
-        
-        // กำหนดมาตราส่วน: 1 วินาที = 80 พิกเซล
         const PIXELS_PER_SECOND = 80;
 
         function drawWaveform() {
@@ -149,33 +194,25 @@
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
             const abnormal = document.getElementById('abnormalSelect').value;
-            
             const rr = parseInt(document.getElementById('rrSlider').value);
             const pi = parseInt(document.getElementById('piSlider').value);
             const slope = parseInt(document.getElementById('slopeSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
 
-            // คำนวณเวลาจริง (วินาที) ให้เป็นพิกเซลหน้าจอ
             const cycleTimeSec = 60 / rr; 
             const cycleLength = cycleTimeSec * PIXELS_PER_SECOND; 
-            
-            // ป้องกันไม่ให้ตั้ง Ti มากกว่าเวลา 1 รอบการหายใจ
             if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
             const tiLength = tiSetting * PIXELS_PER_SECOND; 
             
-            // อัปเดตการแสดงผล I:E Ratio
             const teTimeSec = cycleTimeSec - tiSetting;
-            const ieRatioVal = teTimeSec / tiSetting;
-            document.getElementById('ieRatio').innerText = "I:E = 1:" + ieRatioVal.toFixed(1);
+            document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
 
             const amplitude = pi * 3.5; 
 
-            // วาดตาราง Grid
+            // วาดตาราง Grid และ Baseline
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
-
-            // วาด Baseline
             ctx.strokeStyle = '#7f8c8d'; ctx.setLineDash([5, 5]);
             ctx.beginPath(); ctx.moveTo(0, 140); ctx.lineTo(canvas.width, 140); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 290); ctx.lineTo(canvas.width, 290); ctx.stroke();
@@ -187,49 +224,33 @@
             
             let xOffset = t % (canvas.width + 100);
 
+            // วาดกราฟ
             for(let x = 0; x < canvas.width; x++) {
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; 
                 let f_y = 290; 
 
                 if(time < tiLength) { 
-                    // === ช่วงหายใจเข้า ===
-                    if(mode === 'psv' && time < 8) { p_y += 12; } // Trigger
+                    if(mode === 'psv' && time < 8) p_y += 12; // Trigger
 
-                    if(mode === 'cmv') {
-                        p_y = 140 - (time / tiLength) * amplitude; // Ramp
-                    } else { 
-                        // PCV, PSV ใช้ Slope
+                    if(mode === 'cmv') { p_y = 140 - (time / tiLength) * amplitude; } 
+                    else { 
                         let currentRise = Math.min(time / (slope * 8 + 0.1), 1); 
                         p_y = 140 - (amplitude * currentRise); 
                     }
 
-                    // กราฟ Flow
-                    if (flowType === 'square') {
-                        f_y = 290 - 70; 
-                    } else if (flowType === 'decel') {
-                        f_y = 290 - 70 * Math.exp(-time/30); 
-                    } else if (flowType === 'sine') {
-                        f_y = 290 - Math.sin((time / tiLength) * Math.PI) * 70; 
-                    }
+                    if (flowType === 'square') f_y = 290 - 70; 
+                    else if (flowType === 'decel') f_y = 290 - 70 * Math.exp(-time/30); 
+                    else if (flowType === 'sine') f_y = 290 - Math.sin((time / tiLength) * Math.PI) * 70; 
 
-                    // ความผิดปกติ
                     if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 18;
                     if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45;
-
-                    if(abnormal === 'prolong' && time > tiLength * 0.7) {
-                        f_y = 290; 
-                        p_y -= 25; 
-                    }
+                    if(abnormal === 'prolong' && time > tiLength * 0.7) { f_y = 290; p_y -= 25; }
 
                 } else {
-                    // === ช่วงหายใจออก ===
                     p_y = 140 - amplitude * Math.exp(-(time-tiLength)/15);
                     f_y = 290 + 75 * Math.exp(-(time-tiLength)/25);
-
-                    if(abnormal === 'autopeep' && time > cycleLength - 30) {
-                        f_y = 290 + 35; // กราฟไม่แตะ 0
-                    }
+                    if(abnormal === 'autopeep' && time > cycleLength - 30) f_y = 290 + 35; 
                 }
 
                 if(x === 0) { pressPath.moveTo(x, p_y); flowPath.moveTo(x, f_y); }
@@ -238,9 +259,76 @@
 
             ctx.strokeStyle = '#f1c40f'; ctx.stroke(pressPath); 
             ctx.strokeStyle = '#2ecc71'; ctx.stroke(flowPath);  
-            
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
+
+            // ==========================================
+            // อัปเดต Clinical Animation ให้ตรงกับกราฟขวาสุด
+            // ==========================================
+            let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
+            let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
+            
+            let chestEl = document.getElementById('patientChest');
+            let lungsEl = document.getElementById('patientLungs');
+            let ventScreen = document.getElementById('ventScreen');
+            let phaseBadge = document.getElementById('breathPhaseBadge');
+            let statusTextEl = document.getElementById('clinicalStatusText');
+
+            if (phase === 'Insp') {
+                let progress = rightEdgeTime / tiLength; // 0.0 to 1.0
+                
+                // คำนวณแรงพยายามหายใจ (Effort) จากความผิดปกติ
+                let effortMultiplier = 1;
+                if(abnormal === 'scoop_mild') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.05;
+                if(abnormal === 'scoop_severe') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.15;
+
+                // ขยายหน้าอกและปอดสว่างขึ้น
+                let scaleVal = 1 + (0.15 * progress) * effortMultiplier;
+                chestEl.style.transform = `scale(${scaleVal})`;
+                lungsEl.style.opacity = 0.4 + (0.6 * progress);
+
+                // ไฟเครื่อง Vent สว่าง (จ่ายอากาศ)
+                ventScreen.style.background = '#2ecc71';
+                ventScreen.style.boxShadow = '0 0 15px #2ecc71';
+                
+                phaseBadge.innerText = 'หายใจเข้า (Inspiration)';
+                phaseBadge.style.background = '#2ecc71';
+
+            } else {
+                let expTime = rightEdgeTime - tiLength;
+                let expDuration = cycleLength - tiLength;
+                let progress = expTime / expDuration; 
+
+                // หาก Auto-PEEP หน้าอกยุบไม่สุด
+                let baseScale = 1.0;
+                let baseOpacity = 0.4;
+                if(abnormal === 'autopeep') {
+                    baseScale = 1.05; 
+                    baseOpacity = 0.55;
+                }
+
+                // การยุบตัวเป็นกราฟ Exponential ให้ดูเป็นธรรมชาติ
+                let decay = Math.exp(-progress * 6); 
+                chestEl.style.transform = `scale(${baseScale + (0.15 * decay)})`;
+                lungsEl.style.opacity = baseOpacity + ((1 - baseOpacity) * decay);
+
+                // ไฟเครื่อง Vent ดับ (พัก)
+                ventScreen.style.background = '#34495e';
+                ventScreen.style.boxShadow = 'none';
+
+                phaseBadge.innerText = 'หายใจออก (Exhalation)';
+                phaseBadge.style.background = '#e74c3c';
+            }
+
+            // อัปเดตข้อความอาการ
+            let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
+            if(abnormal === 'scoop_mild') { txt = "⚠️ ผู้ป่วยออกแรงช่วยหายใจ (Mild Effort)"; col = "#e67e22"; }
+            if(abnormal === 'scoop_severe') { txt = "🚨 หิวอากาศรุนแรง (Severe Air Hunger)"; col = "#c0392b"; }
+            if(abnormal === 'autopeep') { txt = "⚠️ มีลมค้างในปอด (Auto-PEEP / Gas Trapping)"; col = "#d35400"; }
+            if(abnormal === 'prolong') { txt = "⚠️ ผู้ป่วยฝืนหายใจออก (Active Exhalation)"; col = "#8e44ad"; }
+            
+            statusTextEl.innerText = txt;
+            statusTextEl.style.color = col;
 
             t -= 2; 
             requestAnimationFrame(drawWaveform);
@@ -250,12 +338,12 @@
 
         function saveGraph() {
             const link = document.createElement('a');
-            link.download = 'vent_sandbox_graph.png';
+            link.download = 'vent_clinical_sim.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
             
             const statusDiv = document.getElementById('saveStatus');
-            statusDiv.innerText = "บันทึกภาพสำเร็จ! ไฟล์ 'vent_sandbox_graph.png' อยู่ในเครื่องของคุณครับ";
+            statusDiv.innerText = "บันทึกภาพสำเร็จ! เช็คไฟล์ในเครื่องได้เลยครับ";
             setTimeout(() => { statusDiv.innerText = ""; }, 4000);
         }
     </script>
