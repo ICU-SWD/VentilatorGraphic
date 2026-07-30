@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Ventilator Simulator (Pro & Logo)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #2c3e50; text-align: center; padding: 20px; margin: 0; color: #333; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); max-width: 950px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+        
+        /* ส่วนหัวและโลโก้ */
+        .header-box { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; position: relative; }
+        .hospital-logo { height: 70px; position: absolute; left: 10px; } /* ปรับขนาดโลโก้ตรงนี้ */
+        .header-text { display: flex; flex-direction: column; align-items: center; }
+        .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 24px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin: 0; }
+
+        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #ecf0f1; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 20px; border: 1px solid #bdc3c7; }
+        .control-group { display: flex; flex-direction: column; align-items: flex-start; margin: 5px; flex: 1 1 180px; }
+        
+        label { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 6px; }
+        select, input[type="range"] { padding: 8px; border-radius: 6px; border: 1px solid #95a5a6; font-family: 'Sarabun', sans-serif; width: 100%; box-sizing: border-box; font-size: 14px; background: white; }
+        
+        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
+        
+        .btn-capture { background-color: #e74c3c; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 25px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: background 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .btn-capture:hover { background-color: #c0392b; }
+        .status-msg { font-size: 14px; color: #27ae60; margin-top: 10px; font-weight: bold; height: 20px; }
+        
+        .info-badge { background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-box">
+            <img src="https://lh3.googleusercontent.com/d/1DlsLtw43ZhgFrmvjS6ySFH4EmSwuS0tk" alt="Hospital Logo" class="hospital-logo">
+            
+            <div class="header-text">
+                <h2 class="header-title">ระบบจำลองกราฟเครื่องช่วยหายใจ</h2>
+                <div class="subtitle">สื่อการเรียนรู้อิเล็กทรอนิกส์ (E-Learning) พัฒนาโดย นายปฏิยุทธ์ อุปพงษ์</div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="control-group">
+                <label>1. โหมด (Mode):</label>
+                <select id="modeSelect">
+                    <option value="cmv">CMV (Volume Control)</option>
+                    <option value="pcv">PCV (Pressure Control)</option>
+                    <option value="psv">PSV (Pressure Support)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>2. รูปแบบ Flow:</label>
+                <select id="flowSelect">
+                    <option value="square">Square (คงที่)</option>
+                    <option value="decel">Decelerating (ลดลง)</option>
+                    <option value="sine">Sine Wave (คลื่นไซน์)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>3. ภาวะผิดปกติ:</label>
+                <select id="abnormalSelect">
+                    <option value="normal">ปกติ (Normal)</option>
+                    <option value="scoop_mild">หิวอากาศ (Scoop 1)</option>
+                    <option value="scoop_severe">หิวอากาศ (Scoop 2)</option>
+                    <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
+                    <option value="prolong">เวลาเข้านานไป (Prolong Ti)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>อัตราหายใจ (RR): <span id="rrVal" style="color:#e74c3c;">15</span></label>
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value">
+            </div>
+
+            <div class="control-group">
+                <label>เวลาหายใจเข้า (Ti): <span id="tiVal" style="color:#e74c3c;">1.0</span> s <span class="info-badge" id="ieRatio">I:E = 1:3.0</span></label>
+                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1)">
+            </div>
+
+            <div class="control-group">
+                <label>แรงดัน/ปริมาตร: <span id="piVal" style="color:#e74c3c;">15</span></label>
+                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value">
+            </div>
+
+            <div class="control-group">
+                <label>Slope / Rise: <span id="slopeVal" style="color:#e74c3c;">0</span></label>
+                <input type="range" id="slopeSlider" min="0" max="10" value="0" oninput="document.getElementById('slopeVal').innerText = this.value">
+            </div>
+        </div>
+        
+        <canvas id="ventCanvas" width="850" height="380"></canvas>
+
+        <button class="btn-capture" onclick="saveGraph()">📸 บันทึกภาพกราฟ (PNG)</button>
+        <div id="saveStatus" class="status-msg"></div>
+    </div>
+
+    <script>
+        // === ส่วนเชื่อมต่อ GAS API ===
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ให้ตรงกับที่คุณ Deploy ไว้
+
+        async function fetchSettingsFromGAS() {
+            try {
+                const response = await fetch(GAS_API_URL);
+                const data = await response.json();
+                
+                if(data.status === "success") {
+                    console.log(data.message);
+                    
+                    // นำข้อมูลจาก API มาอัปเดต UI 
+                    document.getElementById('modeSelect').value = data.defaultSettings.mode;
+                    document.getElementById('flowSelect').value = data.defaultSettings.flowType;
+                    
+                    document.getElementById('rrSlider').value = data.defaultSettings.rr;
+                    document.getElementById('rrVal').innerText = data.defaultSettings.rr;
+                    
+                    document.getElementById('tiSlider').value = data.defaultSettings.ti;
+                    document.getElementById('tiVal').innerText = parseFloat(data.defaultSettings.ti).toFixed(1);
+                    
+                    document.getElementById('piSlider').value = data.defaultSettings.pi;
+                    document.getElementById('piVal').innerText = data.defaultSettings.pi;
+                    
+                    document.getElementById('slopeSlider').value = data.defaultSettings.slope;
+                    document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ GAS API:", error);
+            }
+        }
+
+        // ดึงข้อมูลตอนเปิดหน้าเว็บ
+        window.onload = fetchSettingsFromGAS;
+        // ==============================
+
+        const canvas = document.getElementById('ventCanvas');
+        const ctx = canvas.getContext('2d');
+        let t = 0; 
+        
+        // กำหนดมาตราส่วน: 1 วินาที = 80 พิกเซล
+        const PIXELS_PER_SECOND = 80;
+
+        function drawWaveform() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const mode = document.getElementById('modeSelect').value;
+            const flowType = document.getElementById('flowSelect').value;
+            const abnormal = document.getElementById('abnormalSelect').value;
+            
+            const rr = parseInt(document.getElementById('rrSlider').value);
+            const pi = parseInt(document.getElementById('piSlider').value);
+            const slope = parseInt(document.getElementById('slopeSlider').value);
+            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
+
+            // คำนวณเวลาจริง (วินาที) ให้เป็นพิกเซลหน้าจอ
+            const cycleTimeSec = 60 / rr; 
+            const cycleLength = cycleTimeSec * PIXELS_PER_SECOND; 
+            
+            // ป้องกันไม่ให้ตั้ง Ti มากกว่าเวลา 1 รอบการหายใจ
+            if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
+            const tiLength = tiSetting * PIXELS_PER_SECOND; 
+            
+            // อัปเดตการแสดงผล I:E Ratio
+            const teTimeSec = cycleTimeSec - tiSetting;
+            const ieRatioVal = teTimeSec / tiSetting;
+            document.getElementById('ieRatio').innerText = "I:E = 1:" + ieRatioVal.toFixed(1);
+
+            const amplitude = pi * 3.5; 
+
+            // วาดตาราง Grid
+            ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+
+            // วาด Baseline
+            ctx.strokeStyle = '#7f8c8d'; ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(0, 140); ctx.lineTo(canvas.width, 140); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 290); ctx.lineTo(canvas.width, 290); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.lineWidth = 3;
+            ctx.beginPath(); const pressPath = new Path2D();
+            ctx.beginPath(); const flowPath = new Path2D();
+            
+            let xOffset = t % (canvas.width + 100);
+
+            for(let x = 0; x < canvas.width; x++) {
+                let time = ((x - xOffset + canvas.width + 100) % cycleLength);
+                let p_y = 140; 
+                let f_y = 290; 
+
+                if(time < tiLength) { 
+                    // === ช่วงหายใจเข้า ===
+                    if(mode === 'psv' && time < 8) { p_y += 12; } // Trigger
+
+                    if(mode === 'cmv') {
+                        p_y = 140 - (time / tiLength) * amplitude; // Ramp
+                    } else { 
+                        // PCV, PSV ใช้ Slope
+                        let currentRise = Math.min(time / (slope * 8 + 0.1), 1); 
+                        p_y = 140 - (amplitude * currentRise); 
+                    }
+
+                    // กราฟ Flow
+                    if (flowType === 'square') {
+                        f_y = 290 - 70; 
+                    } else if (flowType === 'decel') {
+                        f_y = 290 - 70 * Math.exp(-time/30); 
+                    } else if (flowType === 'sine') {
+                        f_y = 290 - Math.sin((time / tiLength) * Math.PI) * 70; 
+                    }
+
+                    // ความผิดปกติ
+                    if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 18;
+                    if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45;
+
+                    if(abnormal === 'prolong' && time > tiLength * 0.7) {
+                        f_y = 290; 
+                        p_y -= 25; 
+                    }
+
+                } else {
+                    // === ช่วงหายใจออก ===
+                    p_y = 140 - amplitude * Math.exp(-(time-tiLength)/15);
+                    f_y = 290 + 75 * Math.exp(-(time-tiLength)/25);
+
+                    if(abnormal === 'autopeep' && time > cycleLength - 30) {
+                        f_y = 290 + 35; // กราฟไม่แตะ 0
+                    }
+                }
+
+                if(x === 0) { pressPath.moveTo(x, p_y); flowPath.moveTo(x, f_y); }
+                else { pressPath.lineTo(x, p_y); flowPath.lineTo(x, f_y); }
+            }
+
+            ctx.strokeStyle = '#f1c40f'; ctx.stroke(pressPath); 
+            ctx.strokeStyle = '#2ecc71'; ctx.stroke(flowPath);  
+            
+            ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
+            ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
+
+            t -= 2; 
+            requestAnimationFrame(drawWaveform);
+        }
+
+        drawWaveform();
+
+        function saveGraph() {
+            const link = document.createElement('a');
+            link.download = 'vent_sandbox_graph.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.innerText = "บันทึกภาพสำเร็จ! ไฟล์ 'vent_sandbox_graph.png' อยู่ในเครื่องของคุณครับ";
+            setTimeout(() => { statusDiv.innerText = ""; }, 4000);
+        }
+    </script>
+</body>
+</html>
