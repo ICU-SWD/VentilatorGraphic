@@ -5,51 +5,50 @@
     <title>Ventilator Simulator (Advanced Clinical View)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* === UI แบบหน้าจอ Ventilator จริง (Dark Theme) === */
-        body { font-family: 'Sarabun', sans-serif; background-color: #0d1117; text-align: center; padding: 20px; margin: 0; color: #c9d1d9; }
-        .container { background: #161b22; padding: 25px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-width: 1250px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+        /* === UI โทนสว่าง (Light Theme) === */
+        body { font-family: 'Sarabun', sans-serif; background-color: #1a252f; text-align: center; padding: 20px; margin: 0; color: #333; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); max-width: 1250px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        .header-box { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; position: relative; border-bottom: 1px solid #30363d; padding-bottom: 15px; }
-        .hospital-logo { height: 60px; position: absolute; left: 10px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-        .header-title { color: #f0f6fc; margin: 0 0 5px 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }
-        .subtitle { color: #8b949e; font-size: 14px; margin: 0; }
+        .header-box { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; position: relative; }
+        .hospital-logo { height: 70px; position: absolute; left: 10px; }
+        .header-text { display: flex; flex-direction: column; align-items: center; }
+        .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 26px; font-weight: 700; }
+        .subtitle { color: #7f8c8d; font-size: 15px; margin: 0; }
 
         .main-display { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
         
         /* กล่องแสดงผลคนไข้ */
-        .clinical-panel { background: #0d1117; border: 2px solid #30363d; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
-        .clinical-title { font-weight: bold; color: #58a6ff; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #30363d; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .clinical-panel { background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); }
+        .clinical-title { font-weight: bold; color: #2c3e50; font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; text-transform: uppercase; }
         
-        .bed-scene { position: relative; width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 1px solid #21262d; }
+        .bed-scene { position: relative; width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); border: 2px solid #bdc3c7; }
         .patient-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity 0.3s; }
-        .vent-screen-light { position: absolute; left: 20px; bottom: 20px; width: 15px; height: 15px; background: #34495e; z-index: 2; border-radius: 50%; opacity: 0.9; }
+        .vent-screen-light { position: absolute; left: 20px; bottom: 20px; width: 15px; height: 15px; background: #34495e; z-index: 2; border-radius: 50%; opacity: 0.9; transition: background 0.1s, box-shadow 0.1s; }
 
-        .status-box { background: #161b22; padding: 10px; border-radius: 6px; border: 1px solid #30363d; text-align: left; font-size: 14px; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #000; letter-spacing: 0.5px; }
+        .status-box { background: white; padding: 12px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .status-box p { margin: 5px 0; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; letter-spacing: 0.5px; }
         
         /* กราฟ */
-        canvas { background: #000; border-radius: 8px; border: 2px solid #30363d; width: 100%; max-width: 850px; box-shadow: inset 0 0 30px rgba(0,0,0,1); }
+        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
-        /* แผงควบคุมพารามิเตอร์แบบ Digital */
-        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #0d1117; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 2px solid #30363d; }
-        .control-group { display: flex; flex-direction: column; align-items: center; margin: 5px; flex: 1 1 160px; background: #161b22; padding: 15px 10px; border-radius: 8px; border: 1px solid #21262d; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
+        /* แผงควบคุมพารามิเตอร์แบบ Light Theme + Digital */
+        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; }
+        .control-group { display: flex; flex-direction: column; align-items: center; margin: 5px; flex: 1 1 160px; background: white; padding: 15px 10px; border-radius: 8px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         
-        label { font-size: 13px; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+        label { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
         
-        /* ตัวเลข Digital เรืองแสง */
-        .digital-value { font-size: 28px; font-weight: bold; color: #3fb950; font-family: monospace; text-shadow: 0 0 10px rgba(63,185,80,0.5); margin-bottom: 10px; line-height: 1; }
+        /* ตัวเลข Digital สีแดงสว่างแบบเดิม */
+        .digital-value { font-size: 28px; font-weight: bold; color: #e74c3c; font-family: monospace; margin-bottom: 10px; line-height: 1; }
         
-        select { padding: 8px; border-radius: 4px; border: 1px solid #30363d; font-family: 'Sarabun', sans-serif; width: 100%; font-size: 14px; background: #0d1117; color: #c9d1d9; outline: none; }
-        select:focus { border-color: #58a6ff; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #95a5a6; font-family: 'Sarabun', sans-serif; width: 100%; font-size: 14px; background: white; color: #333; outline: none; }
+        select:focus { border-color: #3498db; }
         
-        /* ตกแต่ง Slider ให้ดูล้ำขึ้น */
-        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #58a6ff; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(88,166,255,0.8); }
-        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #30363d; border-radius: 2px; }
+        input[type="range"] { width: 100%; cursor: pointer; }
         
-        .btn-capture { background-color: #238636; color: white; cursor: pointer; border: 1px solid rgba(240,246,252,0.1); font-weight: bold; padding: 12px 30px; font-size: 16px; border-radius: 6px; margin-top: 20px; transition: 0.2s; box-shadow: 0 0 15px rgba(35,134,54,0.3); }
-        .btn-capture:hover { background-color: #2ea043; box-shadow: 0 0 20px rgba(46,160,67,0.6); }
-        .status-msg { font-size: 14px; color: #3fb950; margin-top: 10px; height: 20px; }
+        .btn-capture { background-color: #2980b9; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 30px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .btn-capture:hover { background-color: #1c5981; }
+        .status-msg { font-size: 14px; color: #27ae60; margin-top: 10px; height: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -65,7 +64,7 @@
         
         <div class="main-display">
             <div class="clinical-panel">
-                <div class="clinical-title">Patient Monitor</div>
+                <div class="clinical-title">🏥 Patient Monitor</div>
                 
                 <div class="bed-scene">
                     <video id="patientVideo" src="" class="patient-video" autoplay loop muted playsinline></video>
@@ -73,10 +72,10 @@
                 </div>
 
                 <div class="status-box">
-                    <p style="color:#8b949e; font-size: 12px; margin-bottom: 4px;">PHASE</p>
-                    <p><span id="breathPhaseBadge" class="badge" style="background:#30363d; color:#c9d1d9;">Wait</span></p>
-                    <p style="color:#8b949e; font-size: 12px; margin-top: 10px; margin-bottom: 4px;">CLINICAL ALARM</p>
-                    <p><span id="clinicalStatusText" style="font-weight:bold; color:#3fb950; font-size: 14px;">NORMAL (Synchronized)</span></p>
+                    <p style="color:#7f8c8d; font-size: 12px; margin-bottom: 4px; font-weight: bold;">ระยะการหายใจ</p>
+                    <p><span id="breathPhaseBadge" class="badge" style="background:#95a5a6;">Wait</span></p>
+                    <p style="color:#7f8c8d; font-size: 12px; margin-top: 10px; margin-bottom: 4px; font-weight: bold;">อาการคลินิก / แจ้งเตือน</p>
+                    <p><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 14px;">ปกติ (Synchronized)</span></p>
                 </div>
             </div>
 
@@ -85,7 +84,7 @@
 
         <div class="control-panel">
             <div class="control-group" style="align-items: flex-start;">
-                <label>Mode</label>
+                <label>Mode (โหมด)</label>
                 <select id="modeSelect" onchange="switchPatientVideo()">
                     <option value="cmv">CMV (Volume)</option>
                     <option value="pcv">PCV (Pressure)</option>
@@ -102,32 +101,32 @@
             <div class="control-group" style="align-items: flex-start; flex: 1 1 200px;">
                 <label>Asynchrony & Alarms</label>
                 <select id="abnormalSelect" onchange="switchPatientVideo()">
-                    <option value="normal">None (Normal)</option>
-                    <option value="autopeep">Auto-PEEP (ลมค้าง)</option>
-                    <option value="scoop_mild">Mild Effort (หิวอากาศ)</option>
-                    <option value="scoop_severe">Severe Air Hunger</option>
-                    <option value="double_trigger">Double Trigger (PCV/CMV)</option>
-                    <option value="premature_cycle">Premature Cycling (ตัดก่อน)</option>
-                    <option value="trigger_fail">Trigger Failure (PSV)</option>
-                    <option value="delay_cycle">Delayed Cycling (ตัดช้า/PSV)</option>
-                    <option value="prolong">Prolonged Ti</option>
+                    <option value="normal">ปกติ (Normal)</option>
+                    <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
+                    <option value="scoop_mild">หิวอากาศ (Mild Effort)</option>
+                    <option value="scoop_severe">หิวอากาศรุนแรง (Severe Air Hunger)</option>
+                    <option value="double_trigger">กระตุ้นซ้อน (Double Trigger)</option>
+                    <option value="premature_cycle">ตัดก่อน (Premature Cycling)</option>
+                    <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
+                    <option value="delay_cycle">ตัดช้า (Delayed Cycling)</option>
+                    <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <label>Resp Rate (RR)</label>
+                <label>อัตราหายใจ (RR)</label>
                 <div class="digital-value" id="rrVal">15</div>
                 <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value;">
             </div>
 
             <div class="control-group">
-                <label>Insp Time (Ti) <span id="ieRatio" style="color:#58a6ff; font-size: 10px; float: right; margin-top: 2px;">1:3.0</span></label>
+                <label>เวลาหายใจเข้า (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
                 <div class="digital-value" id="tiVal">1.0</div>
                 <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1)">
             </div>
 
             <div class="control-group">
-                <label>Pressure / Vol</label>
+                <label>แรงดัน/ปริมาตร</label>
                 <div class="digital-value" id="piVal">15</div>
                 <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value">
             </div>
@@ -139,7 +138,7 @@
             </div>
         </div>
 
-        <button class="btn-capture" onclick="saveGraph()">📸 CAPTURE GRAPH</button>
+        <button class="btn-capture" onclick="saveGraph()">📸 บันทึกภาพกราฟ (PNG)</button>
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
@@ -147,16 +146,16 @@
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         const patientVideos = {
-            'normal': 'Rest.mp4',
-            'scoop_mild': 'Respi.mp4',
-            'scoop_severe': 'Airhunger.mp4',
-            'autopeep': 'Respi.mp4',
-            'prolong': 'Respi.mp4',
-            'double_trigger': 'Respi.mp4', 
-            'premature_cycle': 'Respi.mp4',
-            'trigger_fail': 'Rest.mp4',
-            'delay_cycle': 'Respi.mp4',
-            'over_assist': 'Rest.mp4'
+        'normal': 'Rest.mp4',
+        'scoop_mild': 'Respi.mp4',
+        'scoop_severe': 'Airhunger.mp4',
+        'autopeep': 'Respi.mp4',
+        'prolong': 'Respi.mp4',
+        'double_trigger': 'Respi.mp4',
+        'premature_cycle': 'Respi.mp4',
+        'trigger_fail': 'Rest.mp4',
+        'delay_cycle': 'Respi.mp4',
+        'over_assist': 'Rest.mp4'
         };
 
         function switchPatientVideo() {
@@ -222,17 +221,17 @@
             const tiLength = tiSetting * PIXELS_PER_SECOND; 
             
             const teTimeSec = cycleTimeSec - tiSetting;
-            document.getElementById('ieRatio').innerText = "I:E 1:" + (teTimeSec / tiSetting).toFixed(1);
+            document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
 
             const amplitude = pi * 3.5; 
 
-            // วาด Grid แบบ Ventilator
-            ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
-            for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
-            for(let i=0; i<canvas.height; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+            // วาดตารางกริดเบาๆ
+            ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
             
             // Baseline 
-            ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
             ctx.beginPath(); ctx.moveTo(0, 140); ctx.lineTo(canvas.width, 140); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 290); ctx.lineTo(canvas.width, 290); ctx.stroke();
             ctx.setLineDash([]);
@@ -248,9 +247,7 @@
                 let p_y = 140; let f_y = 290; 
                 let isInsp = false;
 
-                // --- ตรรกะแยกกราฟเข้า/ออก ---
-                
-                // 1. Double Trigger (ซ้อนจังหวะที่ 2)
+                // --- อัลกอริทึม Advanced Asynchrony ---
                 let isDoubleTriggerBreath = false;
                 if (abnormal === 'double_trigger') {
                     let dtStart = tiLength + 10; 
@@ -258,14 +255,14 @@
                     if (time >= dtStart && time < dtEnd) {
                         isInsp = true; isDoubleTriggerBreath = true;
                         let fakeTime = time - dtStart;
-                        p_y = 140 - (fakeTime / tiLength) * amplitude - 15; // กดลึกขึ้นเพราะปอดตึง
-                        f_y = 290 - 60; // ไหลเข้าอีก
+                        p_y = 140 - (fakeTime / tiLength) * amplitude - 15; 
+                        f_y = 290 - 60; 
                     }
                 }
 
                 if (time < tiLength && !isDoubleTriggerBreath) { 
                     isInsp = true;
-                    if(mode === 'psv' && time < 8) p_y += 12; // Trigger dip
+                    if(mode === 'psv' && time < 8) p_y += 12; 
 
                     if(mode === 'cmv') { p_y = 140 - (time / tiLength) * amplitude; } 
                     else { 
@@ -280,36 +277,34 @@
                     if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 18;
                     if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45;
 
-                    // Premature Cycling (ตัดก่อน แต่คนไข้ยังสูด)
+                    // Premature Cycling
                     if(abnormal === 'premature_cycle' && time > tiLength * 0.7) {
-                        isInsp = false; // เครื่องตัดเป็นหายใจออก
-                        p_y += 25; // Pressure ตกวูบ
-                        f_y -= 15; // Flow พยายามตีกลับ
+                        isInsp = false; 
+                        p_y += 25; 
+                        f_y -= 15; 
                     }
                     
-                    // Delayed Cycling (เครื่องแช่นาน คนไข้เริ่มดันออก)
+                    // Delayed Cycling
                     if(abnormal === 'delay_cycle' && time > tiLength - 25) {
-                        p_y -= 25; // Pressure Spike ขึ้น
-                        f_y = 290 + 20; // Flow ตีกลับเป็นบวก
+                        p_y -= 25; 
+                        f_y = 290 + 20; 
                     }
 
                 } else if (!isDoubleTriggerBreath) {
-                    // ช่วงหายใจออกปกติ
                     let expTime = time - tiLength;
                     p_y = 140 - amplitude * Math.exp(-expTime/15);
                     
-                    // ปรับ Auto-PEEP ให้ Expiratory decay ค่อยๆไต่ขึ้นและถูกตัดจบชน Baseline ไม่ทัน
                     if(abnormal === 'autopeep') {
-                        f_y = 290 + 75 * Math.exp(-expTime/65); // ตัวหาร 65 ทำให้ไต่ช้ามาก
+                        f_y = 290 + 75 * Math.exp(-expTime/65); 
                     } else {
-                        f_y = 290 + 75 * Math.exp(-expTime/20); // ปกติ
+                        f_y = 290 + 75 * Math.exp(-expTime/20); 
                     }
 
-                    // Trigger Failure (ออกแรงในจังหวะออก แต่เครื่องไม่ตอบ)
+                    // Trigger Failure
                     if(abnormal === 'trigger_fail' && time > cycleLength - 35 && time < cycleLength - 15) {
                         let effortT = time - (cycleLength - 35);
-                        p_y += 10 * Math.sin(effortT * Math.PI / 20); // กราฟ Paw ตกเล็กน้อย
-                        f_y -= 15 * Math.sin(effortT * Math.PI / 20); // กราฟ Flow ตีขึ้นนิดๆ
+                        p_y += 10 * Math.sin(effortT * Math.PI / 20); 
+                        f_y -= 15 * Math.sin(effortT * Math.PI / 20); 
                     }
 
                     if(abnormal === 'prolong' && time < tiLength + 20) { p_y -= 15; }
@@ -319,13 +314,12 @@
                 else { pressPath.lineTo(x, p_y); flowPath.lineTo(x, f_y); }
             }
 
-            // สีเส้นกราฟเรืองแสง
-            ctx.strokeStyle = '#d2a8ff'; ctx.shadowBlur = 4; ctx.shadowColor = '#d2a8ff'; ctx.stroke(pressPath); 
-            ctx.strokeStyle = '#3fb950'; ctx.shadowBlur = 4; ctx.shadowColor = '#3fb950'; ctx.stroke(flowPath);  
-            ctx.shadowBlur = 0; // reset
+            // สีเส้นกราฟเหลือง/เขียว แบบเดิม
+            ctx.strokeStyle = '#f1c40f'; ctx.stroke(pressPath); 
+            ctx.strokeStyle = '#2ecc71'; ctx.stroke(flowPath);  
             
-            ctx.fillStyle = '#d2a8ff'; ctx.font = '14px monospace'; ctx.fillText('Paw (cmH2O)', 10, 25);
-            ctx.fillStyle = '#3fb950'; ctx.fillText('Flow (L/min)', 10, 175);
+            ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
+            ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
             // อัปเดต UI 
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
@@ -336,27 +330,27 @@
             let statusTextEl = document.getElementById('clinicalStatusText');
 
             if (phase === 'Insp') {
-                ventScreen.style.background = '#3fb950'; ventScreen.style.boxShadow = '0 0 15px #3fb950';
-                phaseBadge.innerText = 'INSPIRATION'; phaseBadge.style.background = '#3fb950'; phaseBadge.style.color = '#000';
+                ventScreen.style.background = '#2ecc71'; ventScreen.style.boxShadow = '0 0 15px #2ecc71';
+                phaseBadge.innerText = 'หายใจเข้า (Inspiration)'; phaseBadge.style.background = '#2ecc71'; phaseBadge.style.color = 'white';
             } else {
-                ventScreen.style.background = '#161b22'; ventScreen.style.boxShadow = 'none';
-                phaseBadge.innerText = 'EXHALATION'; phaseBadge.style.background = '#30363d'; phaseBadge.style.color = '#c9d1d9';
+                ventScreen.style.background = '#34495e'; ventScreen.style.boxShadow = 'none';
+                phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
             // ระบบ Alarm แจ้งเตือน Asynchrony
-            let txt = "NORMAL (Synchronized)"; let col = "#3fb950";
+            let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             
-            if (abnormal === 'autopeep') { txt = "⚠️ ALARM: Auto-PEEP Detected"; col = "#ff7b72"; }
-            else if (abnormal === 'scoop_mild') { txt = "⚠️ ALARM: Active Effort (Flow Starvation)"; col = "#d2a8ff"; }
-            else if (abnormal === 'scoop_severe') { txt = "🚨 ALARM: Severe Air Hunger"; col = "#ff7b72"; }
-            else if (abnormal === 'double_trigger') { txt = "🚨 ALARM: Double Triggering"; col = "#ff7b72"; }
-            else if (abnormal === 'premature_cycle') { txt = "⚠️ ALARM: Premature Cycling"; col = "#ffa657"; }
-            else if (abnormal === 'trigger_fail') { txt = "⚠️ ALARM: Ineffective Triggering"; col = "#ffa657"; }
-            else if (abnormal === 'delay_cycle') { txt = "⚠️ ALARM: Delayed Cycling"; col = "#ffa657"; }
-            else if (abnormal === 'prolong') { txt = "⚠️ ALARM: Active Exhalation"; col = "#d2a8ff"; }
+            if (abnormal === 'autopeep') { txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; }
+            else if (abnormal === 'scoop_mild') { txt = "⚠️ เตือน: Active Effort (ผู้ป่วยออกแรงช่วย)"; col = "#e67e22"; }
+            else if (abnormal === 'scoop_severe') { txt = "🚨 เตือน: Severe Air Hunger (หิวอากาศรุนแรง)"; col = "#c0392b"; }
+            else if (abnormal === 'double_trigger') { txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; col = "#c0392b"; }
+            else if (abnormal === 'premature_cycle') { txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; col = "#e67e22"; }
+            else if (abnormal === 'trigger_fail') { txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; col = "#8e44ad"; }
+            else if (abnormal === 'delay_cycle') { txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; col = "#8e44ad"; }
+            else if (abnormal === 'prolong') { txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; }
             else {
-                if (mode === 'pcv' && flowType === 'sine') { txt = "⚠️ CHECK: Possible Active Effort"; col = "#ffa657"; } 
-                else if (mode === 'psv' && flowType === 'decel') { txt = "⚠️ CHECK: Possible Over-assistance"; col = "#ffa657"; }
+                if (mode === 'pcv' && flowType === 'sine') { txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจออกแรงช่วยหายใจ"; col = "#e67e22"; } 
+                else if (mode === 'psv' && flowType === 'decel') { txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป"; col = "#e67e22"; }
             }
             
             statusTextEl.innerText = txt; statusTextEl.style.color = col;
@@ -368,7 +362,7 @@
 
         function saveGraph() {
             const link = document.createElement('a'); link.download = 'vent_advanced_sim.png'; link.href = canvas.toDataURL('image/png'); link.click();
-            document.getElementById('saveStatus').innerText = "✅ Captured!";
+            document.getElementById('saveStatus').innerText = "✅ บันทึกภาพกราฟสำเร็จ!";
             setTimeout(() => { document.getElementById('saveStatus').innerText = ""; }, 3000);
         }
     </script>
