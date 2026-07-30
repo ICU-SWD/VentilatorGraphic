@@ -8,27 +8,21 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #1a252f; text-align: center; padding: 20px; margin: 0; color: #333; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); max-width: 1250px; margin: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        /* ส่วนหัวและโลโก้ */
         .header-box { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; position: relative; }
         .hospital-logo { height: 70px; position: absolute; left: 10px; }
         .header-text { display: flex; flex-direction: column; align-items: center; }
         .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 26px; font-weight: 700; }
         .subtitle { color: #7f8c8d; font-size: 15px; margin: 0; }
 
-        /* เลย์เอาต์หลัก ซ้าย (คนไข้) - ขวา (กราฟ) */
         .main-display { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
         
-        /* แผงจำลองคนไข้ทางคลินิก */
         .clinical-panel { background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); }
         .clinical-title { font-weight: bold; color: #2c3e50; font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
         
-        /* CSS สำหรับส่วนรูปภาพ 2 ชั้น */
-        .bed-scene { position: relative; width: 100%; height: 200px; background: #dcdde1; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); }
-        .base-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
-        .vent-screen-light { position: absolute; left: 40px; bottom: 80px; width: 30px; height: 20px; background: #34495e; z-index: 2; border-radius: 3px; opacity: 0.8; transition: background 0.1s, box-shadow 0.1s; }
-        .chest-overlay { position: absolute; left: 120px; top: 90px; width: 80px; z-index: 3; transform-origin: center center; will-change: transform; }
+        .bed-scene { position: relative; width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); }
+        .patient-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        .vent-screen-light { position: absolute; left: 20px; bottom: 20px; width: 15px; height: 15px; background: #34495e; z-index: 2; border-radius: 50%; opacity: 0.9; transition: background 0.1s, box-shadow 0.1s; }
 
-        /* สถานะผู้ป่วย */
         .status-box { background: white; padding: 10px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; }
         .status-box p { margin: 5px 0; }
         .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
@@ -49,7 +43,6 @@
 <body>
 
     <div class="container">
-        <!-- ส่วนหัว -->
         <div class="header-box">
             <img src="https://lh3.googleusercontent.com/d/1DlsLtw43ZhgFrmvjS6ySFH4EmSwuS0tk" alt="Hospital Logo" class="hospital-logo">
             <div class="header-text">
@@ -58,23 +51,13 @@
             </div>
         </div>
         
-        <!-- เลย์เอาต์หลัก แสดงผลตรงกลาง -->
         <div class="main-display">
-            
-            <!-- แผงจำลองคนไข้ (Clinical View) -->
             <div class="clinical-panel">
                 <div class="clinical-title">🏥 Clinical Status & Patient</div>
                 
-                <!-- ส่วนแอนิเมชันรูปภาพ 2 ชั้น -->
                 <div class="bed-scene">
-                    <!-- รูปที่ 1: ภาพฐาน (คนไข้ เตียง เครื่องช่วยหายใจ รวมอยู่ในรูปเดียว) -->
-                    <img src="https://lh3.googleusercontent.com/d/17Nk7ardKgkWEWzQIn3mlwa_tmyPBzuJU" alt="Patient and Ventilator" class="base-image">
-
-                    <!-- ไฟสถานะหน้าจอเครื่องช่วยหายใจ (ปรับ left/bottom ให้ตรงกับตำแหน่งหน้าจอในรูปที่ 1) -->
+                    <video id="patientVideo" src="https://lh3.googleusercontent.com/d/1iDelfPpVFI_UT_4VzZAi851lLFmq6P0e" class="patient-video" autoplay loop muted playsinline></video>
                     <div id="ventScreen" class="vent-screen-light"></div>
-
-                    <!-- รูปที่ 2: ภาพหน้าอกสำหรับขยับ (Overlay) (ปรับ left/top/width ให้ทับหน้าอกในรูปที่ 1 พอดี) -->
-                    <img id="patientChest" src="https://lh3.googleusercontent.com/d/1cJIeJOsBGyehmFPO9bgJv7n-RvXfymNz" alt="Animated Chest" class="chest-overlay">
                 </div>
 
                 <div class="status-box">
@@ -83,11 +66,9 @@
                 </div>
             </div>
 
-            <!-- กราฟ Waveform -->
             <canvas id="ventCanvas" width="850" height="380"></canvas>
         </div>
 
-        <!-- แผงควบคุม -->
         <div class="control-panel">
             <div class="control-group">
                 <label>1. โหมด (Mode):</label>
@@ -120,7 +101,7 @@
 
             <div class="control-group">
                 <label>อัตราหายใจ (RR): <span id="rrVal" style="color:#e74c3c;">15</span></label>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; syncVideoSpeed();">
             </div>
 
             <div class="control-group">
@@ -144,8 +125,7 @@
     </div>
 
     <script>
-        // === การดึง API จาก GAS ===
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; // เปลี่ยน URL ของคุณตรงนี้
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         async function fetchSettingsFromGAS() {
             try {
@@ -154,20 +134,43 @@
                 if(data.status === "success") {
                     document.getElementById('modeSelect').value = data.defaultSettings.mode;
                     document.getElementById('flowSelect').value = data.defaultSettings.flowType;
+                    
                     document.getElementById('rrSlider').value = data.defaultSettings.rr;
                     document.getElementById('rrVal').innerText = data.defaultSettings.rr;
+                    
                     document.getElementById('tiSlider').value = data.defaultSettings.ti;
                     document.getElementById('tiVal').innerText = parseFloat(data.defaultSettings.ti).toFixed(1);
+                    
                     document.getElementById('piSlider').value = data.defaultSettings.pi;
                     document.getElementById('piVal').innerText = data.defaultSettings.pi;
+                    
                     document.getElementById('slopeSlider').value = data.defaultSettings.slope;
                     document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
+
+                    syncVideoSpeed();
                 }
-            } catch (error) { console.error("API Fetch Error (สามารถใช้งานต่อได้แบบ Offline):", error); }
+            } catch (error) { 
+                console.error("API Fetch Error (Offline Mode):", error); 
+                syncVideoSpeed(); 
+            }
         }
+
+        // === ฟังก์ชันซิงค์ความเร็ววิดีโอกับ RR (อัปเดตสำหรับคลิป 7 วินาที) ===
+        function syncVideoSpeed() {
+            const videoEl = document.getElementById('patientVideo');
+            const currentRR = parseInt(document.getElementById('rrSlider').value);
+            
+            // วิดีโอ 7 วินาที = รอบหายใจพื้นฐาน 60 / 7 ครั้งต่อนาที
+            const baseRR = 60 / 7; 
+            
+            if(videoEl) {
+                // คำนวณความเร็ว (RR ปัจจุบัน หารด้วย baseRR)
+                videoEl.playbackRate = currentRR / baseRR;
+            }
+        }
+
         window.onload = fetchSettingsFromGAS;
 
-        // === ส่วนประมวลผลกราฟและแอนิเมชันรูปภาพ ===
         const canvas = document.getElementById('ventCanvas');
         const ctx = canvas.getContext('2d');
         let t = 0; 
@@ -194,7 +197,6 @@
 
             const amplitude = pi * 3.5; 
 
-            // วาดตาราง Grid และ Baseline
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -209,14 +211,13 @@
             
             let xOffset = t % (canvas.width + 100);
 
-            // วาดกราฟ
             for(let x = 0; x < canvas.width; x++) {
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; 
                 let f_y = 290; 
 
                 if(time < tiLength) { 
-                    if(mode === 'psv' && time < 8) p_y += 12; // Trigger
+                    if(mode === 'psv' && time < 8) p_y += 12;
 
                     if(mode === 'cmv') { p_y = 140 - (time / tiLength) * amplitude; } 
                     else { 
@@ -247,60 +248,25 @@
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
-            // ==========================================
-            // อัปเดต Clinical Animation (สั่งขยายรูปภาพหน้าอก)
-            // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
             
-            let chestEl = document.getElementById('patientChest');
             let ventScreen = document.getElementById('ventScreen');
             let phaseBadge = document.getElementById('breathPhaseBadge');
             let statusTextEl = document.getElementById('clinicalStatusText');
 
             if (phase === 'Insp') {
-                let progress = rightEdgeTime / tiLength; // 0.0 to 1.0
-                
-                // คำนวณแรงพยายามหายใจ (Effort)
-                let effortMultiplier = 1;
-                if(abnormal === 'scoop_mild') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.05;
-                if(abnormal === 'scoop_severe') effortMultiplier = 1 + Math.sin(progress * Math.PI) * 0.15;
-
-                // สั่งขยาย "รูปภาพหน้าอก" (Overlay)
-                let scaleVal = 1 + (0.15 * progress) * effortMultiplier;
-                chestEl.style.transform = `scale(${scaleVal})`;
-
-                // ไฟเครื่อง Vent สว่าง (ถ้ากำหนดให้แสดงไฟ)
                 ventScreen.style.background = '#2ecc71';
                 ventScreen.style.boxShadow = '0 0 15px #2ecc71';
-                
                 phaseBadge.innerText = 'หายใจเข้า (Inspiration)';
                 phaseBadge.style.background = '#2ecc71';
-
             } else {
-                let expTime = rightEdgeTime - tiLength;
-                let expDuration = cycleLength - tiLength;
-                let progress = expTime / expDuration; 
-
-                // หาก Auto-PEEP หน้าอกยุบไม่สุด
-                let baseScale = 1.0;
-                if(abnormal === 'autopeep') {
-                    baseScale = 1.05; 
-                }
-
-                // การยุบตัวเป็นกราฟ Exponential ให้รูปขยับดูเป็นธรรมชาติ
-                let decay = Math.exp(-progress * 6); 
-                chestEl.style.transform = `scale(${baseScale + (0.15 * decay)})`;
-
-                // ไฟเครื่อง Vent ดับ
                 ventScreen.style.background = '#34495e';
                 ventScreen.style.boxShadow = 'none';
-
                 phaseBadge.innerText = 'หายใจออก (Exhalation)';
                 phaseBadge.style.background = '#e74c3c';
             }
 
-            // อัปเดตข้อความอาการ
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             if(abnormal === 'scoop_mild') { txt = "⚠️ ผู้ป่วยออกแรงช่วยหายใจ (Mild Effort)"; col = "#e67e22"; }
             if(abnormal === 'scoop_severe') { txt = "🚨 หิวอากาศรุนแรง (Severe Air Hunger)"; col = "#c0392b"; }
