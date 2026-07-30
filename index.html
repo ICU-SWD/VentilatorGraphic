@@ -71,8 +71,9 @@
 
         <div class="control-panel">
             <div class="control-group">
+                <!-- เพิ่ม onchange เพื่อให้สลับวิดีโอเมื่อเปลี่ยน Mode หรือ Flow -->
                 <label>1. โหมด (Mode):</label>
-                <select id="modeSelect">
+                <select id="modeSelect" onchange="switchPatientVideo()">
                     <option value="cmv">CMV (Volume Control)</option>
                     <option value="pcv">PCV (Pressure Control)</option>
                     <option value="psv">PSV (Pressure Support)</option>
@@ -81,7 +82,7 @@
             
             <div class="control-group">
                 <label>2. รูปแบบ Flow:</label>
-                <select id="flowSelect">
+                <select id="flowSelect" onchange="switchPatientVideo()">
                     <option value="square">Square (คงที่)</option>
                     <option value="decel">Decelerating (ลดลง)</option>
                     <option value="sine">Sine Wave (คลื่นไซน์)</option>
@@ -125,27 +126,39 @@
     </div>
 
     <script>
-        // เปลี่ยน URL เป็นของแอป GAS ที่ Deploy ไว้
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
-        // ==========================================
-        // คลังเก็บลิงก์วิดีโอ 
-        // ==========================================
         const patientVideos = {
             'normal': 'Rest.mp4',
             'scoop_mild': 'Respi.mp4',
             'scoop_severe': 'Airhunger.mp4',
             'autopeep': 'Respi.mp4',
-            'prolong': 'Respi.mp4'
+            'prolong': 'Respi.mp4',
+            'over_assist': 'Rest.mp4' // คุณสามารถใส่ลิงก์เฉพาะสำหรับกรณีถูกช่วยมากเกินไปได้
         };
 
         function switchPatientVideo() {
+            const mode = document.getElementById('modeSelect').value;
+            const flowType = document.getElementById('flowSelect').value;
             const abnormalState = document.getElementById('abnormalSelect').value;
             const videoEl = document.getElementById('patientVideo');
             
-            if (patientVideos[abnormalState]) {
-                videoEl.src = patientVideos[abnormalState];
-                videoEl.play().catch(e => console.log("กำลังรอสิทธิ์เบราว์เซอร์ในการเล่นวิดีโอ"));
+            let videoKey = abnormalState;
+
+            // ตรวจสอบความสัมพันธ์ Mode และ Flow เพื่อสลับวิดีโออัตโนมัติ (เฉพาะตอนที่ไม่ได้เลือกโรคอื่นๆ ไว้)
+            if (abnormalState === 'normal') {
+                if (mode === 'pcv' && flowType === 'sine') {
+                    videoKey = 'scoop_mild'; // ยืมวิดีโอผู้ป่วยออกแรงมาโชว์
+                } else if (mode === 'psv' && flowType === 'decel') {
+                    videoKey = 'over_assist'; // ดึงวิดีโอกรณี over_assist มาใช้
+                }
+            }
+            
+            // เช็คว่าลิงก์เปลี่ยนไปไหม ถ้าเปลี่ยนค่อยโหลดใหม่
+            let targetSrc = patientVideos[videoKey];
+            if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
+                videoEl.src = targetSrc;
+                videoEl.play().catch(e => console.log("รอเบราว์เซอร์อนุญาตเล่นวิดีโอ"));
             }
         }
 
@@ -201,7 +214,6 @@
 
             const amplitude = pi * 3.5; 
 
-            // วาดเส้น Grid พื้นหลัง
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -216,7 +228,6 @@
             
             let xOffset = t % (canvas.width + 100);
 
-            // คำนวณกราฟ
             for(let x = 0; x < canvas.width; x++) {
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; 
@@ -254,9 +265,6 @@
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
-            // ==========================================
-            // อัปเดต UI (ถอดการควบคุมวิดีโอออก ปล่อยเล่นธรรมชาติ)
-            // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
             
@@ -276,11 +284,31 @@
                 phaseBadge.style.background = '#e74c3c';
             }
 
+            // ==========================================
+            // วิเคราะห์และแสดงผลอาการผิดปกติตามเงื่อนไข
+            // ==========================================
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
-            if(abnormal === 'scoop_mild') { txt = "⚠️ ผู้ป่วยออกแรงช่วยหายใจ (Mild Effort)"; col = "#e67e22"; }
-            if(abnormal === 'scoop_severe') { txt = "🚨 หิวอากาศรุนแรง (Severe Air Hunger)"; col = "#c0392b"; }
-            if(abnormal === 'autopeep') { txt = "⚠️ มีลมค้างในปอด (Auto-PEEP / Gas Trapping)"; col = "#d35400"; }
-            if(abnormal === 'prolong') { txt = "⚠️ ผู้ป่วยฝืนหายใจออก (Active Exhalation)"; col = "#8e44ad"; }
+            
+            // 1. เช็คจากการบังคับเลือกความผิดปกติก่อน
+            if (abnormal === 'scoop_mild') { 
+                txt = "⚠️ ผู้ป่วยออกแรงช่วยหายใจ (Mild Effort)"; col = "#e67e22"; 
+            } else if (abnormal === 'scoop_severe') { 
+                txt = "🚨 หิวอากาศรุนแรง (Severe Air Hunger)"; col = "#c0392b"; 
+            } else if (abnormal === 'autopeep') { 
+                txt = "⚠️ มีลมค้างในปอด (Auto-PEEP / Gas Trapping)"; col = "#d35400"; 
+            } else if (abnormal === 'prolong') { 
+                txt = "⚠️ ผู้ป่วยฝืนหายใจออก (Active Exhalation)"; col = "#8e44ad"; 
+            } 
+            // 2. ถ้าไม่ได้บังคับ ให้วิเคราะห์จาก Mode และ Flow
+            else {
+                if (mode === 'pcv' && flowType === 'sine') {
+                    txt = "⚠️ ผู้ป่วยใช้กล้ามเนื้อตัวเองหายใจ (อาจมีอาการเหนื่อย / Active Effort)";
+                    col = "#e67e22"; // ส้มแจ้งเตือน
+                } else if (mode === 'psv' && flowType === 'decel') {
+                    txt = "⚠️ ระดับการช่วยเหลืออาจเยอะเกินไป (Over-assisted)";
+                    col = "#f39c12"; // เหลืองเตือน
+                }
+            }
             
             statusTextEl.innerText = txt;
             statusTextEl.style.color = col;
