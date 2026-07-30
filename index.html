@@ -56,8 +56,8 @@
                 <div class="clinical-title">🏥 Clinical Status & Patient</div>
                 
                 <div class="bed-scene">
-                    <!-- ใส่คำสั่ง autoplay loop กลับมาเพื่อให้วิดีโอเล่นอย่างเป็นธรรมชาติ -->
-                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" autoplay loop muted playsinline></video>
+                    <!-- ลบ loop ออก เพราะเราจะใช้ JavaScript คุมการวนรอบแบบ 100% แทน -->
+                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" autoplay muted playsinline></video>
                     <div id="ventScreen" class="vent-screen-light"></div>
                 </div>
 
@@ -101,9 +101,9 @@
             </div>
 
             <div class="control-group">
-                <!-- ใส่ syncVideoSpeed() กลับเข้ามา -->
+                <!-- เอา Oninput สำหรับวิดีโอออก ให้กราฟจัดการเอง -->
                 <label>อัตราหายใจ (RR): <span id="rrVal" style="color:#e74c3c;">15</span></label>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; syncVideoSpeed();">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value;">
             </div>
 
             <div class="control-group">
@@ -144,23 +144,9 @@
                     document.getElementById('piVal').innerText = data.defaultSettings.pi;
                     document.getElementById('slopeSlider').value = data.defaultSettings.slope;
                     document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
-
-                    syncVideoSpeed();
                 }
             } catch (error) { 
                 console.error("API Fetch Error (Offline Mode):", error); 
-                syncVideoSpeed();
-            }
-        }
-
-        // คำนวณความเร็ววิดีโอ (รองรับคลิป 7 วินาที)
-        function syncVideoSpeed() {
-            const videoEl = document.getElementById('patientVideo');
-            const currentRR = parseInt(document.getElementById('rrSlider').value);
-            
-            const baseRR = 60 / 7; 
-            if(videoEl) {
-                videoEl.playbackRate = currentRR / baseRR;
             }
         }
 
@@ -170,9 +156,13 @@
         const ctx = canvas.getContext('2d');
         
         let t = 0; 
-        let lastPhase = 'Exp'; // ตัวแปรเก็บสถานะเฟสก่อนหน้า เพื่อจับจังหวะเริ่มหายใจ
+        let lastPhase = 'Exp'; 
         
         const PIXELS_PER_SECOND = 80;
+        
+        // กำหนดคุณสมบัติของวิดีโอ 7 วินาที
+        const VIDEO_PEAK_TIME = 3.5; // จุดที่หน้าอกขยายสุด (ครึ่งหนึ่งของวิดีโอ)
+        const VIDEO_TOTAL_TIME = 7.0; // ความยาววิดีโอทั้งหมด
 
         function drawWaveform() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -190,6 +180,10 @@
             if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
             const tiLength = tiSetting * PIXELS_PER_SECOND; 
             
+            // คำนวณเวลาจริง (วินาที) สำหรับรอบปัจจุบัน
+            const currentTiSec = tiLength / PIXELS_PER_SECOND;
+            const currentTeSec = (cycleLength - tiLength) / PIXELS_PER_SECOND;
+
             const teTimeSec = cycleTimeSec - tiSetting;
             document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
 
@@ -248,7 +242,7 @@
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
             // ==========================================
-            // ระบบ Sync วิดีโอกับกราฟ (Hybrid Method)
+            // ระบบ Dynamic Sync (แยกปรับความเร็ว เข้า-ออก)
             // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
@@ -258,16 +252,23 @@
             let statusTextEl = document.getElementById('clinicalStatusText');
             let videoEl = document.getElementById('patientVideo');
 
-            // --- หัวใจสำคัญของการ Sync ---
-            // ถ้ารอบหายใจเปลี่ยนจาก Exhalation เป็น Inspiration (เริ่มรอบใหม่) 
-            // ให้บังคับวิดีโอกลับไปเริ่มที่วินาทีที่ 0 ทันที เพื่อป้องกันการเหลื่อมล้ำ
-            if (phase === 'Insp' && lastPhase === 'Exp') {
+            // ตรวจสอบการเปลี่ยนจังหวะหายใจ
+            if (phase !== lastPhase) {
                 if (videoEl) {
-                    videoEl.currentTime = 0;
-                    videoEl.play(); // สั่งให้เล่นต่อเผื่อวิดีโอเผลอหยุด
+                    if (phase === 'Insp') {
+                        // เริ่มหายใจเข้า: ข้ามไปวินาทีที่ 0 และปรับความเร็วให้ทันกับเวลา Ti
+                        videoEl.currentTime = 0;
+                        videoEl.playbackRate = VIDEO_PEAK_TIME / currentTiSec;
+                        videoEl.play().catch(e => console.log("รอการคลิกอนุญาตเล่นวิดีโอ"));
+                    } else {
+                        // เริ่มหายใจออก: ข้ามไปจุด peak (3.5) และปรับความเร็วให้ทันเวลา Te
+                        videoEl.currentTime = VIDEO_PEAK_TIME;
+                        videoEl.playbackRate = (VIDEO_TOTAL_TIME - VIDEO_PEAK_TIME) / currentTeSec;
+                        videoEl.play().catch(e => console.log("รอการคลิกอนุญาตเล่นวิดีโอ"));
+                    }
                 }
             }
-            lastPhase = phase; // บันทึกสถานะไว้เช็คในรอบถัดไป
+            lastPhase = phase;
 
             if (phase === 'Insp') {
                 ventScreen.style.background = '#2ecc71';
