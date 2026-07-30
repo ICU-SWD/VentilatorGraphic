@@ -56,8 +56,8 @@
                 <div class="clinical-title">🏥 Clinical Status & Patient</div>
                 
                 <div class="bed-scene">
-                    <!-- นำคำสั่ง autoplay และ loop ออก เพื่อให้ JavaScript ควบคุมเฟรมแทน -->
-                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" muted playsinline></video>
+                    <!-- ใส่คำสั่ง autoplay loop กลับมาเพื่อให้วิดีโอเล่นอย่างเป็นธรรมชาติ -->
+                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" autoplay loop muted playsinline></video>
                     <div id="ventScreen" class="vent-screen-light"></div>
                 </div>
 
@@ -101,9 +101,9 @@
             </div>
 
             <div class="control-group">
-                <!-- เอาคำสั่ง syncVideoSpeed() ออกไปเลย -->
+                <!-- ใส่ syncVideoSpeed() กลับเข้ามา -->
                 <label>อัตราหายใจ (RR): <span id="rrVal" style="color:#e74c3c;">15</span></label>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value;">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; syncVideoSpeed();">
             </div>
 
             <div class="control-group">
@@ -144,22 +144,34 @@
                     document.getElementById('piVal').innerText = data.defaultSettings.pi;
                     document.getElementById('slopeSlider').value = data.defaultSettings.slope;
                     document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
+
+                    syncVideoSpeed();
                 }
             } catch (error) { 
                 console.error("API Fetch Error (Offline Mode):", error); 
+                syncVideoSpeed();
             }
         }
 
-        window.onload = () => {
-            fetchSettingsFromGAS();
-            // หยุดวิดีโอไว้ก่อนเพื่อป้องกันการเล่นอัตโนมัติ
+        // คำนวณความเร็ววิดีโอ (รองรับคลิป 7 วินาที)
+        function syncVideoSpeed() {
             const videoEl = document.getElementById('patientVideo');
-            if(videoEl) { videoEl.pause(); }
-        };
+            const currentRR = parseInt(document.getElementById('rrSlider').value);
+            
+            const baseRR = 60 / 7; 
+            if(videoEl) {
+                videoEl.playbackRate = currentRR / baseRR;
+            }
+        }
+
+        window.onload = fetchSettingsFromGAS;
 
         const canvas = document.getElementById('ventCanvas');
         const ctx = canvas.getContext('2d');
+        
         let t = 0; 
+        let lastPhase = 'Exp'; // ตัวแปรเก็บสถานะเฟสก่อนหน้า เพื่อจับจังหวะเริ่มหายใจ
+        
         const PIXELS_PER_SECOND = 80;
 
         function drawWaveform() {
@@ -236,7 +248,7 @@
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
             // ==========================================
-            // ระบบล็อกเฟรมวิดีโอ (Frame Scrubbing)
+            // ระบบ Sync วิดีโอกับกราฟ (Hybrid Method)
             // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
@@ -246,37 +258,28 @@
             let statusTextEl = document.getElementById('clinicalStatusText');
             let videoEl = document.getElementById('patientVideo');
 
-            // กำหนดค่าจุดกึ่งกลางของคลิป 7 วินาที
-            const VIDEO_DURATION = 7.0; 
-            const INSPIRATION_PEAK = 3.5; // จุดที่หน้าอกขยายสุด (ครึ่งแรก)
-
-            try {
-                if (phase === 'Insp') {
-                    // ล็อกเฟรมช่วงหายใจเข้า (0.0 - 3.5 วิ) ให้ตรงกับเปอร์เซ็นต์กราฟ Ti
-                    if (videoEl && videoEl.readyState >= 1) {
-                        let inspProgress = rightEdgeTime / tiLength;
-                        videoEl.currentTime = inspProgress * INSPIRATION_PEAK;
-                    }
-                    
-                    ventScreen.style.background = '#2ecc71';
-                    ventScreen.style.boxShadow = '0 0 15px #2ecc71';
-                    phaseBadge.innerText = 'หายใจเข้า (Inspiration)';
-                    phaseBadge.style.background = '#2ecc71';
-                } else {
-                    // ล็อกเฟรมช่วงหายใจออก (3.5 - 7.0 วิ) ให้ตรงกับเปอร์เซ็นต์กราฟช่วงที่เหลือ
-                    if (videoEl && videoEl.readyState >= 1) {
-                        let expTime = rightEdgeTime - tiLength;
-                        let expDuration = cycleLength - tiLength;
-                        let expProgress = expTime / expDuration;
-                        videoEl.currentTime = INSPIRATION_PEAK + (expProgress * (VIDEO_DURATION - INSPIRATION_PEAK));
-                    }
-
-                    ventScreen.style.background = '#34495e';
-                    ventScreen.style.boxShadow = 'none';
-                    phaseBadge.innerText = 'หายใจออก (Exhalation)';
-                    phaseBadge.style.background = '#e74c3c';
+            // --- หัวใจสำคัญของการ Sync ---
+            // ถ้ารอบหายใจเปลี่ยนจาก Exhalation เป็น Inspiration (เริ่มรอบใหม่) 
+            // ให้บังคับวิดีโอกลับไปเริ่มที่วินาทีที่ 0 ทันที เพื่อป้องกันการเหลื่อมล้ำ
+            if (phase === 'Insp' && lastPhase === 'Exp') {
+                if (videoEl) {
+                    videoEl.currentTime = 0;
+                    videoEl.play(); // สั่งให้เล่นต่อเผื่อวิดีโอเผลอหยุด
                 }
-            } catch(e) {} // ป้องกัน Error ระหว่างที่วิดีโอกำลังโหลด
+            }
+            lastPhase = phase; // บันทึกสถานะไว้เช็คในรอบถัดไป
+
+            if (phase === 'Insp') {
+                ventScreen.style.background = '#2ecc71';
+                ventScreen.style.boxShadow = '0 0 15px #2ecc71';
+                phaseBadge.innerText = 'หายใจเข้า (Inspiration)';
+                phaseBadge.style.background = '#2ecc71';
+            } else {
+                ventScreen.style.background = '#34495e';
+                ventScreen.style.boxShadow = 'none';
+                phaseBadge.innerText = 'หายใจออก (Exhalation)';
+                phaseBadge.style.background = '#e74c3c';
+            }
 
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             if(abnormal === 'scoop_mild') { txt = "⚠️ ผู้ป่วยออกแรงช่วยหายใจ (Mild Effort)"; col = "#e67e22"; }
