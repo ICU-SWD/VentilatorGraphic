@@ -89,7 +89,6 @@
             </div>
 
             <div class="control-group">
-                <!-- เพิ่มคำสั่ง onchange เพื่อเรียกฟังก์ชันสลับวิดีโอเมื่อเลือกอาการผิดปกติ -->
                 <label>3. ภาวะผิดปกติ:</label>
                 <select id="abnormalSelect" onchange="switchPatientVideo()">
                     <option value="normal">ปกติ (Normal)</option>
@@ -126,10 +125,11 @@
     </div>
 
     <script>
+        // เปลี่ยน URL เป็นของแอป GAS ที่ Deploy ไว้
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         // ==========================================
-        // คลังเก็บลิงก์วิดีโอ (ใส่ลิงก์ของคุณที่นี่)
+        // คลังเก็บลิงก์วิดีโอ 
         // ==========================================
         const patientVideos = {
             'normal': 'Rest.mp4',
@@ -143,10 +143,9 @@
             const abnormalState = document.getElementById('abnormalSelect').value;
             const videoEl = document.getElementById('patientVideo');
             
-            // ตรวจสอบว่ามีลิงก์วิดีโอสำหรับอาการนั้นๆ ไหม
             if (patientVideos[abnormalState]) {
                 videoEl.src = patientVideos[abnormalState];
-                videoEl.play().catch(e => console.log("รออนุญาตเล่นวิดีโอ"));
+                videoEl.play().catch(e => console.log("กำลังรอสิทธิ์เบราว์เซอร์ในการเล่นวิดีโอ"));
             }
         }
 
@@ -169,7 +168,6 @@
             } catch (error) { 
                 console.error("API Fetch Error (Offline Mode):", error); 
             } finally {
-                // เรียกวิดีโอเริ่มต้นมาแสดงหลังจากดึงข้อมูลเสร็จ
                 switchPatientVideo(); 
             }
         }
@@ -180,11 +178,7 @@
         const ctx = canvas.getContext('2d');
         
         let t = 0; 
-        let lastPhase = 'Exp'; 
-        
         const PIXELS_PER_SECOND = 80;
-        const VIDEO_PEAK_TIME = 3.5; 
-        const VIDEO_TOTAL_TIME = 7.0; 
 
         function drawWaveform() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -202,14 +196,12 @@
             if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
             const tiLength = tiSetting * PIXELS_PER_SECOND; 
             
-            const currentTiSec = tiLength / PIXELS_PER_SECOND;
-            const currentTeSec = (cycleLength - tiLength) / PIXELS_PER_SECOND;
-
             const teTimeSec = cycleTimeSec - tiSetting;
             document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
 
             const amplitude = pi * 3.5; 
 
+            // วาดเส้น Grid พื้นหลัง
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -224,6 +216,7 @@
             
             let xOffset = t % (canvas.width + 100);
 
+            // คำนวณกราฟ
             for(let x = 0; x < canvas.width; x++) {
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; 
@@ -261,30 +254,15 @@
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
+            // ==========================================
+            // อัปเดต UI (ถอดการควบคุมวิดีโอออก ปล่อยเล่นธรรมชาติ)
+            // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
             
             let ventScreen = document.getElementById('ventScreen');
             let phaseBadge = document.getElementById('breathPhaseBadge');
             let statusTextEl = document.getElementById('clinicalStatusText');
-            let videoEl = document.getElementById('patientVideo');
-
-            if (videoEl && videoEl.src) { // เช็คว่ามีลิงก์วิดีโอแล้วค่อยทำงาน
-                if (videoEl.paused) {
-                    videoEl.play().catch(e => {});
-                }
-
-                if (phase !== lastPhase) {
-                    if (phase === 'Insp') {
-                        videoEl.currentTime = 0;
-                        videoEl.playbackRate = VIDEO_PEAK_TIME / currentTiSec;
-                    } else {
-                        videoEl.currentTime = VIDEO_PEAK_TIME;
-                        videoEl.playbackRate = (VIDEO_TOTAL_TIME - VIDEO_PEAK_TIME) / currentTeSec;
-                    }
-                }
-            }
-            lastPhase = phase;
 
             if (phase === 'Insp') {
                 ventScreen.style.background = '#2ecc71';
