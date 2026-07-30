@@ -56,8 +56,8 @@
                 <div class="clinical-title">🏥 Clinical Status & Patient</div>
                 
                 <div class="bed-scene">
-                    <!-- ลบ loop ออก เพราะเราจะใช้ JavaScript คุมการวนรอบแบบ 100% แทน -->
-                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" autoplay muted playsinline></video>
+                    <!-- แก้ไขจุดที่ 1: ใส่คำสั่ง loop กลับคืนมาเพื่อป้องกันเบราว์เซอร์ตัดจบวิดีโอ -->
+                    <video id="Respi.mp4" src="Respi.mp4" class="patient-video" autoplay loop muted playsinline></video>
                     <div id="ventScreen" class="vent-screen-light"></div>
                 </div>
 
@@ -101,7 +101,6 @@
             </div>
 
             <div class="control-group">
-                <!-- เอา Oninput สำหรับวิดีโอออก ให้กราฟจัดการเอง -->
                 <label>อัตราหายใจ (RR): <span id="rrVal" style="color:#e74c3c;">15</span></label>
                 <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value;">
             </div>
@@ -161,8 +160,8 @@
         const PIXELS_PER_SECOND = 80;
         
         // กำหนดคุณสมบัติของวิดีโอ 7 วินาที
-        const VIDEO_PEAK_TIME = 3.5; // จุดที่หน้าอกขยายสุด (ครึ่งหนึ่งของวิดีโอ)
-        const VIDEO_TOTAL_TIME = 7.0; // ความยาววิดีโอทั้งหมด
+        const VIDEO_PEAK_TIME = 3.5; 
+        const VIDEO_TOTAL_TIME = 7.0; 
 
         function drawWaveform() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -180,7 +179,6 @@
             if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
             const tiLength = tiSetting * PIXELS_PER_SECOND; 
             
-            // คำนวณเวลาจริง (วินาที) สำหรับรอบปัจจุบัน
             const currentTiSec = tiLength / PIXELS_PER_SECOND;
             const currentTeSec = (cycleLength - tiLength) / PIXELS_PER_SECOND;
 
@@ -189,7 +187,6 @@
 
             const amplitude = pi * 3.5; 
 
-            // วาดเส้น Grid
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -241,9 +238,6 @@
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
 
-            // ==========================================
-            // ระบบ Dynamic Sync (แยกปรับความเร็ว เข้า-ออก)
-            // ==========================================
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < tiLength ? 'Insp' : 'Exp';
             
@@ -252,19 +246,19 @@
             let statusTextEl = document.getElementById('clinicalStatusText');
             let videoEl = document.getElementById('patientVideo');
 
-            // ตรวจสอบการเปลี่ยนจังหวะหายใจ
-            if (phase !== lastPhase) {
-                if (videoEl) {
+            // แก้ไขจุดที่ 2: เพิ่มระบบตรวจสอบว่าถ้าวิดีโอเผลอหยุด ให้บังคับเล่นทันที
+            if (videoEl) {
+                if (videoEl.paused) {
+                    videoEl.play().catch(e => {});
+                }
+
+                if (phase !== lastPhase) {
                     if (phase === 'Insp') {
-                        // เริ่มหายใจเข้า: ข้ามไปวินาทีที่ 0 และปรับความเร็วให้ทันกับเวลา Ti
                         videoEl.currentTime = 0;
                         videoEl.playbackRate = VIDEO_PEAK_TIME / currentTiSec;
-                        videoEl.play().catch(e => console.log("รอการคลิกอนุญาตเล่นวิดีโอ"));
                     } else {
-                        // เริ่มหายใจออก: ข้ามไปจุด peak (3.5) และปรับความเร็วให้ทันเวลา Te
                         videoEl.currentTime = VIDEO_PEAK_TIME;
                         videoEl.playbackRate = (VIDEO_TOTAL_TIME - VIDEO_PEAK_TIME) / currentTeSec;
-                        videoEl.play().catch(e => console.log("รอการคลิกอนุญาตเล่นวิดีโอ"));
                     }
                 }
             }
