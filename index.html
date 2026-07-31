@@ -30,9 +30,9 @@
         canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
         .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; }
-        .control-group { display: flex; flex-direction: column; align-items: center; margin: 5px; flex: 1 1 160px; background: white; padding: 15px 10px; border-radius: 8px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .control-group { display: flex; flex-direction: column; align-items: center; margin: 5px; flex: 1 1 140px; background: white; padding: 15px 10px; border-radius: 8px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative;}
         
-        label { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+        label { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; width: 100%; text-align: left;}
         .digital-value { font-size: 28px; font-weight: bold; color: #e74c3c; font-family: monospace; margin-bottom: 10px; line-height: 1; }
         
         select { padding: 8px; border-radius: 6px; border: 1px solid #95a5a6; font-family: 'Sarabun', sans-serif; width: 100%; font-size: 14px; background: white; color: #333; outline: none; }
@@ -43,6 +43,8 @@
         .btn-capture { background-color: #2980b9; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 30px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-capture:hover { background-color: #1c5981; }
         .status-msg { font-size: 14px; color: #27ae60; margin-top: 10px; height: 20px; font-weight: bold; }
+        
+        .ppeak-badge { position: absolute; top: 12px; right: 10px; font-size: 12px; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 2px 8px; border-radius: 4px; border: 1px solid #e74c3c; }
     </style>
 </head>
 <body>
@@ -77,7 +79,7 @@
         </div>
 
         <div class="control-panel">
-            <div class="control-group" style="align-items: flex-start;">
+            <div class="control-group" style="align-items: flex-start; flex: 1 1 180px;">
                 <label>Mode (โหมด)</label>
                 <select id="modeSelect" onchange="switchPatientVideo()">
                     <option value="cmv">CMV (Volume)</option>
@@ -116,19 +118,26 @@
             </div>
 
             <div class="control-group">
-                <label>เวลาหายใจเข้า (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
+                <label>เวลา (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
                 <div class="digital-value" id="tiVal">1.0</div>
                 <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1)">
             </div>
 
             <div class="control-group">
-                <label>แรงดัน/ปริมาตร</label>
+                <label>Pressure</label>
+                <div class="ppeak-badge" id="ppeakDisplay">Ppeak: 20</div>
                 <div class="digital-value" id="piVal">15</div>
                 <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value">
             </div>
 
             <div class="control-group">
-                <label>Rise Time</label>
+                <label>PEEP</label>
+                <div class="digital-value" id="peepVal">5</div>
+                <input type="range" id="peepSlider" min="0" max="20" value="5" oninput="document.getElementById('peepVal').innerText = this.value">
+            </div>
+
+            <div class="control-group">
+                <label>Slope</label>
                 <div class="digital-value" id="slopeVal">0</div>
                 <input type="range" id="slopeSlider" min="0" max="10" value="0" oninput="document.getElementById('slopeVal').innerText = this.value">
             </div>
@@ -139,10 +148,8 @@
     </div>
 
     <script>
-        // อย่าลืมนำลิงก์ GAS ของคุณมาวางตรงนี้นะครับ
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
-        // ตารางเล่นวิดีโอจำลองคนไข้
         const patientVideos = {
             'normal': 'Rest.mp4',
             'scoop_mild': 'Respi.mp4',
@@ -165,12 +172,10 @@
             const videoEl = document.getElementById('patientVideo');
             
             let videoKey = abnormalState;
-
             if (abnormalState === 'normal') {
                 if (mode === 'pcv' && flowType === 'sine') videoKey = 'scoop_mild'; 
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist'; 
             }
-            
             let targetSrc = patientVideos[videoKey];
             if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
                 videoEl.src = targetSrc;
@@ -193,6 +198,10 @@
                     document.getElementById('piVal').innerText = data.defaultSettings.pi;
                     document.getElementById('slopeSlider').value = data.defaultSettings.slope;
                     document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
+                    if(data.defaultSettings.peep) {
+                        document.getElementById('peepSlider').value = data.defaultSettings.peep;
+                        document.getElementById('peepVal').innerText = data.defaultSettings.peep;
+                    }
                 }
             } catch (error) { console.error("Offline Mode"); } 
             finally { switchPatientVideo(); }
@@ -210,19 +219,23 @@
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
             const abnormal = document.getElementById('abnormalSelect').value;
+            
             let rr = parseInt(document.getElementById('rrSlider').value);
             const pi = parseInt(document.getElementById('piSlider').value);
+            const peep = parseInt(document.getElementById('peepSlider').value);
             const slope = parseInt(document.getElementById('slopeSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
 
-            // จำลอง Auto-trigger (เครื่องตีรอบเร็วกว่าปกติจาก Leak)
+            // อัปเดต Ppeak แบบ Real-time
+            const ppeak = pi + peep;
+            document.getElementById('ppeakDisplay').innerText = "Ppeak: " + ppeak;
+
             if (abnormal === 'auto_trigger') rr += 15; 
 
             const cycleTimeSec = 60 / rr; 
             const cycleLength = cycleTimeSec * PIXELS_PER_SECOND; 
             if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
             
-            // จำลอง Premature Cycling (ตัด Ti เร็วกว่าที่ควรจะเป็น)
             let drawTiLength = tiSetting * PIXELS_PER_SECOND; 
             if (abnormal === 'premature_cycle') drawTiLength = drawTiLength * 0.6;
 
@@ -231,12 +244,10 @@
 
             const amplitude = pi * 3.5; 
 
-            // วาดเส้นตาราง
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
             
-            // Baseline 
             ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
             ctx.beginPath(); ctx.moveTo(0, 140); ctx.lineTo(canvas.width, 140); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 290); ctx.lineTo(canvas.width, 290); ctx.stroke();
@@ -252,9 +263,9 @@
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; let f_y = 290; 
                 
-                // === ปรับตามสมการกราฟใหม่ ===
-                
-                // 1. Double Trigger (ซ้อนจังหวะที่ 2 ทันทีที่จบ Ti แรกโดย Flow ไม่แตะ 0)
+                // คำนวณ Slope สำหรับ Flow (ยิ่งค่าน้อย ยิ่งขึ้นเร็ว / 0 = 100% ขึ้นทันที)
+                let flowRiseSlope = Math.min(time / (slope * 4 + 0.1), 1);
+
                 let isDoubleTriggerBreath = false;
                 if (abnormal === 'double_trigger') {
                     let dtStart = drawTiLength; 
@@ -262,34 +273,36 @@
                     if (time >= dtStart && time < dtEnd) {
                         isDoubleTriggerBreath = true;
                         let fakeTime = time - dtStart;
-                        p_y = 140 - (fakeTime / drawTiLength) * amplitude - 10; // แรงดันสูงขึ้นนิดหน่อย
-                        f_y = 290 - 70 * Math.exp(-fakeTime/20); // เข้าใหม่ทันที
+                        p_y = 140 - (fakeTime / drawTiLength) * amplitude - 10;
+                        f_y = 290 - 70 * Math.exp(-fakeTime/20); 
                     }
                 }
 
                 if (time < drawTiLength && !isDoubleTriggerBreath) { 
-                    // === ช่วงหายใจเข้า ===
+                    // === แรงดัน (Pressure) ===
                     if(mode === 'psv' && time < 8) p_y += 12; 
 
-                    if(mode === 'cmv') { p_y = 140 - (time / drawTiLength) * amplitude; } 
-                    else { 
-                        let currentRise = Math.min(time / (slope * 8 + 0.1), 1); 
-                        p_y = 140 - (amplitude * currentRise); 
+                    if(mode === 'cmv') { 
+                        p_y = 140 - (time / drawTiLength) * amplitude; 
+                    } else { 
+                        // Pressure ขึ้นแบบทันที (ไม่ได้รับผลจาก Slope แล้ว)
+                        p_y = 140 - amplitude; 
                     }
 
-                    if (flowType === 'square') f_y = 290 - 70; 
-                    else if (flowType === 'decel') f_y = 290 - 70 * Math.exp(-time/30); 
-                    else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70; 
+                    // === กระแสลม (Flow) ===
+                    // Flow จะค่อยๆ ไต่ระดับขึ้นตามค่า Slope ที่ตั้งไว้
+                    if (flowType === 'square') f_y = 290 - 70 * flowRiseSlope; 
+                    else if (flowType === 'decel') f_y = 290 - (70 * flowRiseSlope) * Math.exp(-time/30); 
+                    else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70 * flowRiseSlope; 
 
                     if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 18;
-                    if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45; // เพิ่มสมการ scoop_severe กลับมาแล้วครับ
+                    if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45; 
                     
                     if(abnormal === 'delay_cycle' && time > drawTiLength - 25) {
                         p_y -= 25; f_y = 290 + 20; 
                     }
 
                 } else if (!isDoubleTriggerBreath) {
-                    // === ช่วงหายใจออก ===
                     let expTime = time - drawTiLength;
                     p_y = 140 - amplitude * Math.exp(-expTime/15);
                     
@@ -299,34 +312,26 @@
                         f_y = 290 + 75 * Math.exp(-expTime/20); 
                     }
 
-                    // 2. Auto-trigger (Circuit Leak) - ปรับ Baseline Flow ให้ลอยขึ้นจาก 0 เล็กน้อย
-                    if(abnormal === 'auto_trigger') {
-                        f_y -= 15; // เลื่อน Baseline ขึ้น (Flow ไม่ติดลบสุด)
-                    }
+                    if(abnormal === 'auto_trigger') f_y -= 15;
 
-                    // 3. Premature Cycling (Dip หลังหายใจเข้าเสร็จ)
                     if(abnormal === 'premature_cycle' && expTime < 25) {
-                        let pull = Math.sin(expTime * Math.PI / 25) * 35; // ผู้ป่วยยังพยายามสูดต่อ
-                        p_y += pull * 0.4; // Pressure ลดลงนิดนึง
-                        f_y -= pull; // Flow ตีกลับเป็นบวกเป็นรอยแหว่ง
+                        let pull = Math.sin(expTime * Math.PI / 25) * 35; 
+                        p_y += pull * 0.4; f_y -= pull; 
                     }
 
-                    // 4. Trigger Failure (รอยแหว่งตรงกลาง Expiratory Phase)
                     if(abnormal === 'trigger_fail' && time > cycleLength * 0.6 && time < cycleLength * 0.8) {
                         let effortLen = cycleLength * 0.2;
                         let effortT = time - (cycleLength * 0.6);
-                        p_y += 15 * Math.sin(effortT * Math.PI / effortLen); // กด Pressure ลง
-                        f_y -= 25 * Math.sin(effortT * Math.PI / effortLen); // Flow ขยับขึ้น
+                        p_y += 15 * Math.sin(effortT * Math.PI / effortLen); 
+                        f_y -= 25 * Math.sin(effortT * Math.PI / effortLen); 
                     }
 
                     if(abnormal === 'prolong' && time < drawTiLength + 20) { p_y -= 15; }
                 }
 
-                // 5. Sawtooth Pattern (เพิ่ม Noise ตลอดทั้งกราฟ)
                 if (abnormal === 'sawtooth') {
-                    let noise = Math.sin(time * 0.8) * 4; // รอยหยักฟันเลื่อย
-                    p_y += noise * 0.5;
-                    f_y += noise;
+                    let noise = Math.sin(time * 0.8) * 4; 
+                    p_y += noise * 0.5; f_y += noise;
                 }
 
                 if(x === 0) { pressPath.moveTo(x, p_y); flowPath.moveTo(x, f_y); }
@@ -356,7 +361,9 @@
 
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             
-            if (abnormal === 'autopeep') { txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; }
+            // ลำดับความสำคัญการแจ้งเตือน (Barotrauma สูงสุด)
+            if (ppeak > 35) { txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; }
+            else if (abnormal === 'autopeep') { txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; }
             else if (abnormal === 'auto_trigger') { txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; col = "#c0392b"; }
             else if (abnormal === 'double_trigger') { txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; col = "#c0392b"; }
             else if (abnormal === 'premature_cycle') { txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; col = "#e67e22"; }
@@ -366,10 +373,6 @@
             else if (abnormal === 'scoop_mild') { txt = "⚠️ เตือน: Active Effort (ผู้ป่วยออกแรงช่วย)"; col = "#e67e22"; }
             else if (abnormal === 'scoop_severe') { txt = "🚨 เตือน: Severe Air Hunger (หิวอากาศรุนแรง)"; col = "#c0392b"; }
             else if (abnormal === 'prolong') { txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; }
-            else {
-                if (mode === 'pcv' && flowType === 'sine') { txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจออกแรงช่วยหายใจ"; col = "#e67e22"; } 
-                else if (mode === 'psv' && flowType === 'decel') { txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป"; col = "#e67e22"; }
-            }
             
             statusTextEl.innerText = txt; statusTextEl.style.color = col;
 
