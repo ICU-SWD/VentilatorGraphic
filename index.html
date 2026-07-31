@@ -105,8 +105,8 @@
                     <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
                     <option value="sawtooth">มีน้ำ/เสมหะในสาย (Sawtooth Pattern)</option>
                     <option value="delay_cycle">ตัดช้า (Delayed Cycling)</option>
-                    <option value="scoop_mild">หิวอากาศ (Mild Effort)</option>
-                    <option value="scoop_severe">หิวอากาศรุนแรง (Severe Air Hunger)</option>
+                    <option value="scoop_mild">Pressure Scooped out (Mild)</option>
+                    <option value="scoop_severe">Pressure Scooped out (Severe)</option>
                     <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
                 </select>
             </div>
@@ -159,7 +159,7 @@
             'auto_trigger': 'Respi.mp4',
             'double_trigger': 'Respi.mp4', 
             'premature_cycle': 'Respi.mp4',
-            'trigger_fail': 'Rest.mp4',
+            'trigger_fail': 'Rest.mp4'
             'sawtooth': 'Respi.mp4',
             'delay_cycle': 'Respi.mp4',
             'over_assist': 'Rest.mp4'
@@ -361,8 +361,10 @@
 
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             
-            // ลำดับความสำคัญการแจ้งเตือน (Barotrauma สูงสุด)
-            if (ppeak > 35) { txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; }
+            // ปรับตรรกะการแจ้งเตือนใหม่ เพื่อให้โหมด Normal ตรวจจับ PCV/PSV ได้แม่นยำขึ้น
+            if (ppeak > 35) { 
+                txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; 
+            }
             else if (abnormal === 'autopeep') { txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; }
             else if (abnormal === 'auto_trigger') { txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; col = "#c0392b"; }
             else if (abnormal === 'double_trigger') { txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; col = "#c0392b"; }
@@ -370,9 +372,17 @@
             else if (abnormal === 'trigger_fail') { txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; col = "#8e44ad"; }
             else if (abnormal === 'sawtooth') { txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; col = "#3498db"; }
             else if (abnormal === 'delay_cycle') { txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; col = "#8e44ad"; }
-            else if (abnormal === 'scoop_mild') { txt = "⚠️ เตือน: Active Effort (ผู้ป่วยออกแรงช่วย)"; col = "#e67e22"; }
-            else if (abnormal === 'scoop_severe') { txt = "🚨 เตือน: Severe Air Hunger (หิวอากาศรุนแรง)"; col = "#c0392b"; }
+            else if (abnormal === 'scoop_mild') { txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; col = "#e67e22"; }
+            else if (abnormal === 'scoop_severe') { txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; col = "#c0392b"; }
             else if (abnormal === 'prolong') { txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; }
+            else if (abnormal === 'normal') {
+                if (mode === 'pcv' && flowType === 'sine') { 
+                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; col = "#e67e22"; 
+                }
+                else if (mode === 'psv' && flowType === 'decel') { 
+                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; col = "#e67e22"; 
+                }
+            }
             
             statusTextEl.innerText = txt; statusTextEl.style.color = col;
 
