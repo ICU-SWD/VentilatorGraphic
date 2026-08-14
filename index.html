@@ -27,7 +27,7 @@
         .status-box p { margin: 5px 0; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; letter-spacing: 0.5px; }
         
-        /* เพิ่มสไตล์สำหรับกล่อง Guideline ให้ดูแยกส่วนชัดเจน */
+        /* สไตล์สำหรับกล่องคำอธิบายกราฟและ Guideline */
         .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; }
         
         canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
@@ -76,9 +76,12 @@
                     <p style="color:#7f8c8d; font-size: 12px; margin-top: 10px; margin-bottom: 4px; font-weight: bold;">อาการคลินิก / แจ้งเตือน</p>
                     <p><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 14px;">ปกติ (Synchronized)</span></p>
                     
-                    <!-- ส่วนแสดงแนวทางการแก้ไขที่เพิ่มเข้ามาใหม่ -->
                     <div class="guideline-section">
-                        <p style="color:#3498db; font-size: 12px; margin-bottom: 4px; font-weight: bold;">💡 แนวทางการแก้ไข (Guideline)</p>
+                        <!-- คำอธิบายลักษณะกราฟที่เพิ่มมาใหม่ -->
+                        <p style="color:#e67e22; font-size: 12px; margin-bottom: 4px; font-weight: bold;">📊 ลักษณะกราฟ (Waveform)</p>
+                        <p id="waveformDescText" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;">Pressure และ Flow สอดคล้องกับการตั้งค่า</p>
+
+                        <p style="color:#3498db; font-size: 12px; margin-bottom: 4px; font-weight: bold;">💡 แนวทางการแก้ไข</p>
                         <p id="guidelineText" style="font-size: 13px; color: #2c3e50; line-height: 1.4;">สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์</p>
                     </div>
                 </div>
@@ -157,7 +160,7 @@
     </div>
 
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // อย่าลืมใส่ URL ใหม่ถ้ามีการอัปเดต GAS
+        const GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; 
 
         const patientVideos = {
             'normal': 'Rest.mp4',
@@ -235,7 +238,7 @@
             const slope = parseInt(document.getElementById('slopeSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
 
-            // อัปเดต Ppeak แบบ Real-time
+            // อัปเดต Ppeak 
             const ppeak = pi + peep;
             document.getElementById('ppeakDisplay').innerText = "Ppeak: " + ppeak;
 
@@ -354,7 +357,8 @@
             let ventScreen = document.getElementById('ventScreen');
             let phaseBadge = document.getElementById('breathPhaseBadge');
             let statusTextEl = document.getElementById('clinicalStatusText');
-            let guidelineTextEl = document.getElementById('guidelineText'); // เพิ่มตัวแปรสำหรับ Guideline
+            let guidelineTextEl = document.getElementById('guidelineText'); 
+            let waveformDescTextEl = document.getElementById('waveformDescText'); // ดึงกล่องคำอธิบาย
 
             if (phase === 'Insp') {
                 ventScreen.style.background = '#2ecc71'; ventScreen.style.boxShadow = '0 0 15px #2ecc71';
@@ -364,80 +368,95 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
-            // ระบบ Alarm และการเลือกคำแนะนำ (Guideline)
+            // ระบบ Alarm, Guideline และ คำอธิบายกราฟ (Waveform Description)
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             let guideTxt = "สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์";
+            let waveDesc = "กราฟ Pressure และ Flow สอดคล้องกับการตั้งค่า เครื่องและผู้ป่วยทำงานสัมพันธ์กันดี";
             
             if (ppeak > 35) { 
                 txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; 
                 col = "#c0392b"; 
                 guideTxt = "ลด Pressure/Volume, ลด PEEP, ตรวจสอบภาวะลมรั่วในช่องอก (Pneumothorax) หรือทางเดินหายใจอุดกั้น";
+                waveDesc = "กราฟ Pressure พุ่งสูงเกินกว่า 35 cmH2O ซึ่งเสี่ยงต่อการเกิดถุงลมโป่งพองแตก";
             }
             else if (abnormal === 'autopeep') { 
                 txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
                 col = "#c0392b"; 
                 guideTxt = "ยืดเวลาหายใจออก (Te) หรือลด RR, ปรับค่า PEEP ให้เหมาะสม, พ่นยาขยายหลอดลมหากจำเป็น";
+                waveDesc = "กราฟ Flow ขาออก (Expiratory) สิ้นสุดโดยไม่แตะเส้นศูนย์ (Baseline) ก่อนเครื่องเริ่มจ่ายลมรอบถัดไป";
             }
             else if (abnormal === 'auto_trigger') { 
                 txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; 
                 col = "#c0392b"; 
                 guideTxt = "ค้นหาจุดที่ลมรั่วในระบบ (Circuit leak) หรือปรับ Trigger sensitivity ให้แข็งขึ้น (ลดความไว)";
+                waveDesc = "กราฟ Flow ไม่กลับไปแตะ 0 และเกิดรอบการหายใจถี่กว่าตั้งค่าโดยไม่มีรอยเว้าของ Pressure จากแรงดูดผู้ป่วย";
             }
             else if (abnormal === 'double_trigger') { 
                 txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; 
                 col = "#c0392b"; 
                 guideTxt = "เพิ่มเวลา Ti, เพิ่ม Pressure/Volume ให้เพียงพอต่อความต้องการ หรือพิจารณาให้ยา Sedative หากจำเป็น";
+                waveDesc = "เกิดกราฟการหายใจ 2 รอบติดกัน โดยที่รอบแรกยังหายใจออกไม่สุด กราฟ Pressure มักพุ่งสูงและต่อกัน";
             }
             else if (abnormal === 'premature_cycle') { 
                 txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; 
                 col = "#e67e22"; 
                 guideTxt = "ยืดเวลาหายใจเข้า (Ti) ให้ยาวขึ้น หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์ต่ำลง";
+                waveDesc = "กราฟ Flow ตีกลับเป็นบวก (แหว่งขึ้น) ในช่วงเริ่มต้นการหายใจออก และกราฟ Pressure ตกวูบ";
             }
             else if (abnormal === 'trigger_fail') { 
                 txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; 
                 col = "#8e44ad"; 
                 guideTxt = "ปรับ Trigger sensitivity ให้ไวขึ้น (ตั้งค่าตัวเลขให้เข้าใกล้ 0) หรือตรวจสอบภาวะ Auto-PEEP";
+                waveDesc = "พบรอยหยัก (Dip) ที่กราฟ Pressure และ Flow ขยับขึ้นช่วงหายใจออก แต่ไม่มีรอบการหายใจตามมา";
             }
             else if (abnormal === 'sawtooth') { 
                 txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; 
                 col = "#3498db"; 
                 guideTxt = "ทำการดูดเสมหะ (Suction) ให้ผู้ป่วย หรือเทน้ำที่ขังอยู่ในสายเครื่องช่วยหายใจออก (Drain water)";
+                waveDesc = "กราฟ Pressure และ Flow มีลักษณะหยักและสั่นสะเทือนคล้ายฟันเลื่อย (Sawtooth) ตลอดแนว";
             }
             else if (abnormal === 'delay_cycle') { 
                 txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; 
                 col = "#8e44ad"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ลง หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์สูงขึ้นเพื่อให้ตัดเร็วขึ้น";
+                waveDesc = "พบรอยแหลม (Spike) พุ่งขึ้นที่กราฟ Pressure ช่วงท้ายการหายใจเข้า และ Flow แหว่งเป็นบวก";
             }
             else if (abnormal === 'scoop_mild') { 
                 txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; 
                 col = "#e67e22"; 
                 guideTxt = "เพิ่ม Flow หรือปรับ Rise Time (Slope) ให้เร็วขึ้น, พิจารณาเพิ่ม Pressure Support";
+                waveDesc = "กราฟ Pressure ขาเข้ามีลักษณะเว้าแหว่ง (Scooped out) โค้งลงเล็กน้อย แสดงถึงการออกแรงสูดช่วยของผู้ป่วย";
             }
             else if (abnormal === 'scoop_severe') { 
                 txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; 
                 col = "#c0392b"; 
                 guideTxt = "เร่งการจ่าย Flow/Pressure ทันที, เปลี่ยนโหมดให้ตอบสนองผู้ป่วยดีขึ้น และหาสาเหตุของการหอบ";
+                waveDesc = "กราฟ Pressure ขาเข้าเว้าลึกลงอย่างชัดเจนจนเสียรูปทรง เครื่องจ่าย Flow ให้ไม่ทันความต้องการ";
             }
             else if (abnormal === 'prolong') { 
                 txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
                 col = "#e67e22"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
+                waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
             }
             else if (abnormal === 'normal') {
                 if (mode === 'pcv' && flowType === 'sine') { 
                     txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; 
                     col = "#e67e22"; 
                     guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
+                    waveDesc = "กราฟ Pressure เป็นสี่เหลี่ยม แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
                 }
                 else if (mode === 'psv' && flowType === 'decel') { 
                     txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; 
                     col = "#e67e22"; 
                     guideTxt = "อาจลดระดับ Pressure Support ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
+                    waveDesc = "กราฟ Flow ขาเข้ามีลักษณะลาดลง (Decelerating) ยาวนาน อาจเกิดจาก Pressure Support ที่สูงเกินไป";
                 }
             }
             
             statusTextEl.innerText = txt; statusTextEl.style.color = col;
-            guidelineTextEl.innerText = guideTxt; // อัปเดตข้อความใน HTML
+            guidelineTextEl.innerText = guideTxt; 
+            waveformDescTextEl.innerText = waveDesc; // อัปเดตข้อความอธิบายกราฟ
 
             t -= 2; requestAnimationFrame(drawWaveform);
         }
