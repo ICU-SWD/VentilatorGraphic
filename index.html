@@ -95,13 +95,13 @@
                 <label>Mode (โหมด)</label>
                 <select id="modeSelect" onchange="switchPatientVideo()">
                     <option value="cmv">CMV (Volume)</option>
-                    <option value="pcv">PCV (Pressure)</option>
+                    <option value="pcv" selected>PCV (Pressure)</option>
                     <option value="psv">PSV (Support)</option>
                 </select>
                 <label style="margin-top: 10px;">Flow Pattern</label>
                 <select id="flowSelect" onchange="switchPatientVideo()">
                     <option value="square">Square</option>
-                    <option value="decel">Decelerating</option>
+                    <option value="decel" selected>Decelerating</option>
                     <option value="sine">Sine Wave</option>
                 </select>
             </div>
@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         const patientVideos = {
             'normal': 'Rest.mp4',
@@ -200,6 +200,7 @@
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
                 if(data.status === "success") {
+                    // หากไม่ได้เปลี่ยนค่า defaultSettings ในไฟล์ GAS ให้ค่าเหล่านี้จะดึงมาทับการตั้งค่าเริ่มต้นหน้าเว็บ
                     document.getElementById('modeSelect').value = data.defaultSettings.mode;
                     document.getElementById('flowSelect').value = data.defaultSettings.flowType;
                     document.getElementById('rrSlider').value = data.defaultSettings.rr;
@@ -238,7 +239,7 @@
             const slope = parseInt(document.getElementById('slopeSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
 
-            // อัปเดต Ppeak 
+            // อัปเดต Ppeak แบบ Real-time
             const ppeak = pi + peep;
             document.getElementById('ppeakDisplay').innerText = "Ppeak: " + ppeak;
 
@@ -275,6 +276,7 @@
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; let f_y = 290; 
                 
+                // คำนวณ Slope สำหรับ Flow (ยิ่งค่าน้อย ยิ่งขึ้นเร็ว / 0 = 100% ขึ้นทันที)
                 let flowRiseSlope = Math.min(time / (slope * 4 + 0.1), 1);
 
                 let isDoubleTriggerBreath = false;
@@ -290,14 +292,18 @@
                 }
 
                 if (time < drawTiLength && !isDoubleTriggerBreath) { 
+                    // === แรงดัน (Pressure) ===
                     if(mode === 'psv' && time < 8) p_y += 12; 
 
                     if(mode === 'cmv') { 
                         p_y = 140 - (time / drawTiLength) * amplitude; 
                     } else { 
+                        // Pressure ขึ้นแบบทันที (ไม่ได้รับผลจาก Slope แล้ว)
                         p_y = 140 - amplitude; 
                     }
 
+                    // === กระแสลม (Flow) ===
+                    // Flow จะค่อยๆ ไต่ระดับขึ้นตามค่า Slope ที่ตั้งไว้
                     if (flowType === 'square') f_y = 290 - 70 * flowRiseSlope; 
                     else if (flowType === 'decel') f_y = 290 - (70 * flowRiseSlope) * Math.exp(-time/30); 
                     else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70 * flowRiseSlope; 
