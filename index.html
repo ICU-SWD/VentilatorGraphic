@@ -27,6 +27,9 @@
         .status-box p { margin: 5px 0; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; letter-spacing: 0.5px; }
         
+        /* เพิ่มสไตล์สำหรับกล่อง Guideline ให้ดูแยกส่วนชัดเจน */
+        .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; }
+        
         canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
         .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; }
@@ -72,6 +75,12 @@
                     <p><span id="breathPhaseBadge" class="badge" style="background:#95a5a6;">Wait</span></p>
                     <p style="color:#7f8c8d; font-size: 12px; margin-top: 10px; margin-bottom: 4px; font-weight: bold;">อาการคลินิก / แจ้งเตือน</p>
                     <p><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 14px;">ปกติ (Synchronized)</span></p>
+                    
+                    <!-- ส่วนแสดงแนวทางการแก้ไขที่เพิ่มเข้ามาใหม่ -->
+                    <div class="guideline-section">
+                        <p style="color:#3498db; font-size: 12px; margin-bottom: 4px; font-weight: bold;">💡 แนวทางการแก้ไข (Guideline)</p>
+                        <p id="guidelineText" style="font-size: 13px; color: #2c3e50; line-height: 1.4;">สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์</p>
+                    </div>
                 </div>
             </div>
 
@@ -148,7 +157,7 @@
     </div>
 
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // อย่าลืมใส่ URL ใหม่ถ้ามีการอัปเดต GAS
 
         const patientVideos = {
             'normal': 'Rest.mp4',
@@ -263,7 +272,6 @@
                 let time = ((x - xOffset + canvas.width + 100) % cycleLength);
                 let p_y = 140; let f_y = 290; 
                 
-                // คำนวณ Slope สำหรับ Flow (ยิ่งค่าน้อย ยิ่งขึ้นเร็ว / 0 = 100% ขึ้นทันที)
                 let flowRiseSlope = Math.min(time / (slope * 4 + 0.1), 1);
 
                 let isDoubleTriggerBreath = false;
@@ -279,18 +287,14 @@
                 }
 
                 if (time < drawTiLength && !isDoubleTriggerBreath) { 
-                    // === แรงดัน (Pressure) ===
                     if(mode === 'psv' && time < 8) p_y += 12; 
 
                     if(mode === 'cmv') { 
                         p_y = 140 - (time / drawTiLength) * amplitude; 
                     } else { 
-                        // Pressure ขึ้นแบบทันที (ไม่ได้รับผลจาก Slope แล้ว)
                         p_y = 140 - amplitude; 
                     }
 
-                    // === กระแสลม (Flow) ===
-                    // Flow จะค่อยๆ ไต่ระดับขึ้นตามค่า Slope ที่ตั้งไว้
                     if (flowType === 'square') f_y = 290 - 70 * flowRiseSlope; 
                     else if (flowType === 'decel') f_y = 290 - (70 * flowRiseSlope) * Math.exp(-time/30); 
                     else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70 * flowRiseSlope; 
@@ -350,6 +354,7 @@
             let ventScreen = document.getElementById('ventScreen');
             let phaseBadge = document.getElementById('breathPhaseBadge');
             let statusTextEl = document.getElementById('clinicalStatusText');
+            let guidelineTextEl = document.getElementById('guidelineText'); // เพิ่มตัวแปรสำหรับ Guideline
 
             if (phase === 'Insp') {
                 ventScreen.style.background = '#2ecc71'; ventScreen.style.boxShadow = '0 0 15px #2ecc71';
@@ -359,32 +364,80 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
+            // ระบบ Alarm และการเลือกคำแนะนำ (Guideline)
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
+            let guideTxt = "สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์";
             
-            // ปรับตรรกะการแจ้งเตือนใหม่ เพื่อให้โหมด Normal ตรวจจับ PCV/PSV ได้แม่นยำขึ้น
             if (ppeak > 35) { 
-                txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; 
+                txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; 
+                col = "#c0392b"; 
+                guideTxt = "ลด Pressure/Volume, ลด PEEP, ตรวจสอบภาวะลมรั่วในช่องอก (Pneumothorax) หรือทางเดินหายใจอุดกั้น";
             }
-            else if (abnormal === 'autopeep') { txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; }
-            else if (abnormal === 'auto_trigger') { txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; col = "#c0392b"; }
-            else if (abnormal === 'double_trigger') { txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; col = "#c0392b"; }
-            else if (abnormal === 'premature_cycle') { txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; col = "#e67e22"; }
-            else if (abnormal === 'trigger_fail') { txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; col = "#8e44ad"; }
-            else if (abnormal === 'sawtooth') { txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; col = "#3498db"; }
-            else if (abnormal === 'delay_cycle') { txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; col = "#8e44ad"; }
-            else if (abnormal === 'scoop_mild') { txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; col = "#e67e22"; }
-            else if (abnormal === 'scoop_severe') { txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; col = "#c0392b"; }
-            else if (abnormal === 'prolong') { txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; }
+            else if (abnormal === 'autopeep') { 
+                txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
+                col = "#c0392b"; 
+                guideTxt = "ยืดเวลาหายใจออก (Te) หรือลด RR, ปรับค่า PEEP ให้เหมาะสม, พ่นยาขยายหลอดลมหากจำเป็น";
+            }
+            else if (abnormal === 'auto_trigger') { 
+                txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; 
+                col = "#c0392b"; 
+                guideTxt = "ค้นหาจุดที่ลมรั่วในระบบ (Circuit leak) หรือปรับ Trigger sensitivity ให้แข็งขึ้น (ลดความไว)";
+            }
+            else if (abnormal === 'double_trigger') { 
+                txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; 
+                col = "#c0392b"; 
+                guideTxt = "เพิ่มเวลา Ti, เพิ่ม Pressure/Volume ให้เพียงพอต่อความต้องการ หรือพิจารณาให้ยา Sedative หากจำเป็น";
+            }
+            else if (abnormal === 'premature_cycle') { 
+                txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; 
+                col = "#e67e22"; 
+                guideTxt = "ยืดเวลาหายใจเข้า (Ti) ให้ยาวขึ้น หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์ต่ำลง";
+            }
+            else if (abnormal === 'trigger_fail') { 
+                txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; 
+                col = "#8e44ad"; 
+                guideTxt = "ปรับ Trigger sensitivity ให้ไวขึ้น (ตั้งค่าตัวเลขให้เข้าใกล้ 0) หรือตรวจสอบภาวะ Auto-PEEP";
+            }
+            else if (abnormal === 'sawtooth') { 
+                txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; 
+                col = "#3498db"; 
+                guideTxt = "ทำการดูดเสมหะ (Suction) ให้ผู้ป่วย หรือเทน้ำที่ขังอยู่ในสายเครื่องช่วยหายใจออก (Drain water)";
+            }
+            else if (abnormal === 'delay_cycle') { 
+                txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; 
+                col = "#8e44ad"; 
+                guideTxt = "ลดเวลาหายใจเข้า (Ti) ลง หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์สูงขึ้นเพื่อให้ตัดเร็วขึ้น";
+            }
+            else if (abnormal === 'scoop_mild') { 
+                txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; 
+                col = "#e67e22"; 
+                guideTxt = "เพิ่ม Flow หรือปรับ Rise Time (Slope) ให้เร็วขึ้น, พิจารณาเพิ่ม Pressure Support";
+            }
+            else if (abnormal === 'scoop_severe') { 
+                txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; 
+                col = "#c0392b"; 
+                guideTxt = "เร่งการจ่าย Flow/Pressure ทันที, เปลี่ยนโหมดให้ตอบสนองผู้ป่วยดีขึ้น และหาสาเหตุของการหอบ";
+            }
+            else if (abnormal === 'prolong') { 
+                txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
+                col = "#e67e22"; 
+                guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
+            }
             else if (abnormal === 'normal') {
                 if (mode === 'pcv' && flowType === 'sine') { 
-                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; col = "#e67e22"; 
+                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; 
+                    col = "#e67e22"; 
+                    guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
                 }
                 else if (mode === 'psv' && flowType === 'decel') { 
-                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; col = "#e67e22"; 
+                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; 
+                    col = "#e67e22"; 
+                    guideTxt = "อาจลดระดับ Pressure Support ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
                 }
             }
             
             statusTextEl.innerText = txt; statusTextEl.style.color = col;
+            guidelineTextEl.innerText = guideTxt; // อัปเดตข้อความใน HTML
 
             t -= 2; requestAnimationFrame(drawWaveform);
         }
