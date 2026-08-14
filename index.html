@@ -371,7 +371,7 @@
             // ระบบ Alarm, Guideline และ คำอธิบายกราฟ (Waveform Description)
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             let guideTxt = "สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์";
-            let waveDesc = "กราฟ Pressure และ Flow สอดคล้องกับการตั้งค่า เครื่องและผู้ป่วยทำงานสัมพันธ์กันดี";
+            let waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) และ Flow เป็น decelerate ผู้ป่วยไม่ออกแรงเอง สอดคล้องกับการตั้งค่าเพื่อให้ผู้ป่วยได้พัก";
             
             if (ppeak > 35) { 
                 txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; 
@@ -444,7 +444,7 @@
                     txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; 
                     col = "#e67e22"; 
                     guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
-                    waveDesc = "กราฟ Pressure เป็นสี่เหลี่ยม แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
+                    waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
                 }
                 else if (mode === 'psv' && flowType === 'decel') { 
                     txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; 
