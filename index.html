@@ -157,17 +157,17 @@
                 </select>
             </div>
 
-            <!-- เพิ่ม switchPatientVideo() ใน oninput เพื่อให้ตรวจสอบ Auto-PEEP และเปลี่ยนวิดีโอทันทีเวลาเลื่อนสไลเดอร์ -->
+            <!-- เพิ่มเช็ค Auto Asynchrony เข้าไปในสไลเดอร์ -->
             <div class="control-group">
                 <label>อัตราหายใจ (RR)</label>
                 <div class="digital-value" id="rrVal">15</div>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; switchPatientVideo();">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; checkAutoAsynchrony(); switchPatientVideo();">
             </div>
 
             <div class="control-group">
                 <label>เวลา (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
                 <div class="digital-value" id="tiVal">1.0</div>
-                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1); switchPatientVideo();">
+                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1); checkAutoAsynchrony(); switchPatientVideo();">
             </div>
 
             <div class="control-group">
@@ -194,7 +194,6 @@
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
-    <!-- Popup คู่มือการใช้งาน -->
     <div id="guideModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeGuide()">&times;</span>
@@ -223,7 +222,6 @@
         </div>
     </div>
 
-    <!-- Popup เฉลยคำตอบ -->
     <div id="answerModal" class="modal">
         <div class="modal-content" style="text-align: center; max-width: 500px;">
             <span class="close-btn" onclick="document.getElementById('answerModal').style.display='none'">&times;</span>
@@ -304,6 +302,28 @@
             document.getElementById('answerModal').style.display = 'block';
         }
 
+        // ฟังก์ชันอัปเดตช่อง Dropdown อัตโนมัติเมื่อเลื่อน Slider
+        function checkAutoAsynchrony() {
+            let rr = parseInt(document.getElementById('rrSlider').value);
+            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
+            let cycleTimeSec = 60 / rr;
+            let teTimeSec = cycleTimeSec - tiSetting;
+            
+            let dropdown = document.getElementById('abnormalSelect');
+            let currentState = dropdown.value;
+
+            if (teTimeSec < 0.65) {
+                dropdown.value = 'autopeep'; // บังคับเปลี่ยนเป็น Auto-PEEP
+            } else if (rr <= 15 && tiSetting >= 2.0) {
+                dropdown.value = 'prolong';  // บังคับเปลี่ยนเป็น Prolong
+            } else {
+                // ถ้าค่ากลับมาปกติแล้ว ให้รีเซ็ต Dropdown กลับเป็น Normal
+                if (currentState === 'autopeep' || currentState === 'prolong') {
+                    dropdown.value = 'normal';
+                }
+            }
+        }
+
         function resetApp() {
             document.getElementById('modeSelect').value = 'pcv';
             document.getElementById('flowSelect').value = 'decel';
@@ -334,24 +354,7 @@
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
-            let abnormalState = document.getElementById('abnormalSelect').value;
-            
-            // ดึงค่า Slider มาประเมิน Auto-Detection สำหรับวิดีโอด้วย
-            let rr = parseInt(document.getElementById('rrSlider').value);
-            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
-            let cycleTimeSec = 60 / rr;
-            if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
-            let teTimeSec = cycleTimeSec - tiSetting;
-
-            // ระบบ Auto-Detect ทำงานเมื่อเลือกโหมดปกติ
-            if (abnormalState === 'normal') {
-                if (teTimeSec < 0.65) {
-                    abnormalState = 'autopeep'; // Te สั้นไป บังคับใช้วิดีโอ Auto-PEEP
-                } else if (rr <= 15 && tiSetting >= 2.0) {
-                    abnormalState = 'prolong';  // Ti ยาวไป บังคับใช้วิดีโอ Prolong (Active Exhalation)
-                }
-            }
-
+            const abnormalState = document.getElementById('abnormalSelect').value;
             const videoEl = document.getElementById('patientVideo');
             
             let videoKey = abnormalState;
@@ -359,7 +362,6 @@
                 if (mode === 'pcv' && flowType === 'sine') videoKey = 'scoop_mild'; 
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist'; 
             }
-            
             let targetSrc = patientVideos[videoKey];
             if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
                 videoEl.src = targetSrc;
@@ -388,7 +390,10 @@
                     }
                 }
             } catch (error) {} 
-            finally { switchPatientVideo(); }
+            finally { 
+                checkAutoAsynchrony(); // ตรวจสอบตั้งแต่โหลดหน้าแรก
+                switchPatientVideo(); 
+            }
         }
 
         window.onload = fetchSettingsFromGAS;
@@ -402,7 +407,7 @@
             
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
-            let abnormal = document.getElementById('abnormalSelect').value;
+            const abnormal = document.getElementById('abnormalSelect').value;
             
             let rr = parseInt(document.getElementById('rrSlider').value);
             const pi = parseInt(document.getElementById('piSlider').value);
@@ -424,20 +429,6 @@
 
             const teTimeSec = cycleTimeSec - tiSetting;
             document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
-
-            // ==========================================
-            // ระบบ Auto-Detection (ตรวจจับความสัมพันธ์ RR กับ Ti อัตโนมัติ)
-            // ==========================================
-            let isAutoDetected = false;
-            if (abnormal === 'normal') {
-                if (teTimeSec < 0.65) {
-                    abnormal = 'autopeep'; // Te สั้นเกินไป ระบายลมไม่ทัน
-                    isAutoDetected = true;
-                } else if (rr <= 15 && tiSetting >= 2.0) {
-                    abnormal = 'prolong'; // Ti นานเกินไป ผู้ป่วยฝืนออก
-                    isAutoDetected = true;
-                }
-            }
 
             const amplitude = pi * 3.5; 
 
@@ -541,6 +532,11 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
+            // เช็คว่าระบบเพิ่งตรวจจับแบบ Auto ได้หรือไม่
+            let isAutoDetected = false;
+            if (abnormal === 'autopeep' && teTimeSec < 0.65) isAutoDetected = true;
+            if (abnormal === 'prolong' && rr <= 15 && tiSetting >= 2.0) isAutoDetected = true;
+
             // บันทึกคำตอบที่ถูกต้องไว้ในระบบหลังบ้าน (รวมเคส Auto-detect)
             if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine') { currentActualAbnormal = 'scoop_mild'; }
             else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel') { currentActualAbnormal = 'over_assist'; }
@@ -556,8 +552,7 @@
                 waveDesc = "กราฟ Pressure พุ่งสูงเกินกว่า 35 cmH2O ซึ่งเสี่ยงต่อการเกิดถุงลมโป่งพองแตก";
             }
             else if (abnormal === 'autopeep') { 
-                // เพิ่มข้อความบอกว่าตรวจจับอัตโนมัติ
-                txt = isAutoDetected ? "⚠️ เตือน: Auto-PEEP (ระบบตรวจพบจากการตั้งค่า Te สั้นเกินไป)" : "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
+                txt = isAutoDetected ? "⚠️ เตือน: Auto-PEEP (ตรวจพบอัตโนมัติจากการตั้งค่า Te สั้นไป)" : "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
                 col = "#c0392b"; 
                 guideTxt = "ยืดเวลาหายใจออก (Te) หรือลด RR, ปรับค่า PEEP ให้เหมาะสม, พ่นยาขยายหลอดลมหากจำเป็น";
                 waveDesc = "กราฟ Flow ขาออก (Expiratory) สิ้นสุดโดยไม่แตะเส้นศูนย์ (Baseline) ก่อนเครื่องเริ่มจ่ายลมรอบถัดไป";
@@ -603,8 +598,7 @@
                 waveDesc = "กราฟ Pressure ขาเข้าเว้าลึกลงอย่างชัดเจนจนเสียรูปทรง เครื่องจ่าย Flow ให้ไม่ทันความต้องการ";
             }
             else if (abnormal === 'prolong') { 
-                // เพิ่มข้อความบอกว่าตรวจจับอัตโนมัติ
-                txt = isAutoDetected ? "⚠️ เตือน: Active Exhalation (ระบบตรวจพบจากการตั้งค่า Ti นานเกินไป)" : "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
+                txt = isAutoDetected ? "⚠️ เตือน: Active Exhalation (ตรวจพบอัตโนมัติจากการตั้งค่า Ti นานไป)" : "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
                 col = "#e67e22"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
                 waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
