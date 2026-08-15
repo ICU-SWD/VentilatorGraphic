@@ -14,7 +14,6 @@
         .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 26px; font-weight: 700; }
         .subtitle { color: #7f8c8d; font-size: 15px; margin: 0; }
 
-        /* สไตล์สำหรับปุ่มเมนูด้านบน */
         .top-btn { cursor: pointer; border: none; font-weight: bold; padding: 8px 16px; font-size: 14px; border-radius: 6px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); color: white; }
         .btn-guide { background-color: #f39c12; } .btn-guide:hover { background-color: #d68910; }
         .btn-exam { background-color: #8e44ad; } .btn-exam:hover { background-color: #732d91; }
@@ -70,7 +69,6 @@
                 <h2 class="header-title">VENTILATOR GRAPHICS SIMULATOR</h2>
                 <div class="subtitle">Advanced Clinical & Asynchrony Module | พัฒนาโดย นายปฏิยุทธ์ อุปพงษ์</div>
                 
-                <!-- แถบเมนูปุ่มด้านบน -->
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
                     <button class="top-btn btn-guide" onclick="openGuide()">📖 ขั้นตอนการใช้งาน</button>
                     <button id="examModeBtn" class="top-btn btn-exam" onclick="toggleExamMode()">🎓 เปิด Exam Mode</button>
@@ -94,7 +92,6 @@
                     <p style="color:#7f8c8d; font-size: 12px; margin-top: 10px; margin-bottom: 4px; font-weight: bold;">อาการคลินิก / แจ้งเตือน</p>
                     <p><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 14px;">ปกติ (Synchronized)</span></p>
                     
-                    <!-- ส่วนเฉลย (ซ่อนตอนสอบ) -->
                     <div id="guidelineSection" class="guideline-section">
                         <p style="color:#e67e22; font-size: 12px; margin-bottom: 4px; font-weight: bold;">📊 ลักษณะกราฟ (Waveform)</p>
                         <p id="waveformDescText" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;">Pressure และ Flow สอดคล้องกับการตั้งค่า</p>
@@ -103,7 +100,6 @@
                         <p id="guidelineText" style="font-size: 13px; color: #2c3e50; line-height: 1.4;">สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์</p>
                     </div>
 
-                    <!-- ส่วนฟอร์มตอบคำถาม (แสดงเฉพาะตอนสอบ) -->
                     <div id="examSection" class="guideline-section" style="display: none; background: #fdfefe; padding: 10px; border-radius: 6px; border: 1px solid #dcdde1;">
                         <p style="color:#8e44ad; font-size: 13px; font-weight: bold; margin-bottom: 8px;">📝 โหมดทดสอบ: วิเคราะห์ความผิดปกติ</p>
                         <select id="studentAnswer" style="margin-bottom: 10px;">
@@ -161,16 +157,17 @@
                 </select>
             </div>
 
+            <!-- เพิ่ม switchPatientVideo() ใน oninput เพื่อให้ตรวจสอบ Auto-PEEP และเปลี่ยนวิดีโอทันทีเวลาเลื่อนสไลเดอร์ -->
             <div class="control-group">
                 <label>อัตราหายใจ (RR)</label>
                 <div class="digital-value" id="rrVal">15</div>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value;">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; switchPatientVideo();">
             </div>
 
             <div class="control-group">
                 <label>เวลา (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
                 <div class="digital-value" id="tiVal">1.0</div>
-                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1)">
+                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1); switchPatientVideo();">
             </div>
 
             <div class="control-group">
@@ -197,7 +194,7 @@
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
-    <!-- Popup คู่มือการใช้งาน (ปรับปรุงใหม่ แบ่งโหมดชัดเจน) -->
+    <!-- Popup คู่มือการใช้งาน -->
     <div id="guideModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeGuide()">&times;</span>
@@ -207,14 +204,13 @@
             <h4 style="color: #2980b9; margin-bottom: 5px; margin-top: 20px;">▶️ 1. โหมดจำลองสถานการณ์ (Simulation Mode) - สำหรับสอน</h4>
             <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
                 <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i>, <i>Flow Pattern</i> และปรับพารามิเตอร์ต่างๆ ตามเคสที่ต้องการ</li>
-                <li><b>จำลองความผิดปกติ:</b> เลือกเมนู <i>Asynchrony & Alarms</i> เพื่อให้ระบบแสดงกราฟฟิกและวิดีโออาการคนไข้</li>
-                <li><b>การสอน:</b> ให้นักศึกษาสังเกตความสัมพันธ์ของกราฟ ควบคู่กับอาการคนไข้จำลอง</li>
+                <li><b>ระบบอัจฉริยะ (Auto-Detection):</b> หากตั้งค่า RR และ Ti จนเวลาหายใจออก (Te) สั้นเกินไป ระบบจะแสดงกราฟ <b>Auto-PEEP</b> ให้อัตโนมัติ หรือถ้าตั้ง Ti นานเกินไปขณะที่ RR ต่ำ ระบบจะแสดงกราฟ <b>ฝืนหายใจออก (Prolonged Ti)</b> ให้อัตโนมัติเช่นกัน</li>
                 <li><b>ดูเฉลย:</b> อาจารย์สามารถใช้คำอธิบายกราฟและแนวทางการแก้ไขที่มุมซ้ายล่าง เพื่ออธิบายให้นักศึกษาฟังได้ทันที</li>
             </ol>
 
             <h4 style="color: #8e44ad; margin-bottom: 5px;">▶️ 2. โหมดทดสอบนักศึกษา (Exam Mode) - สำหรับสอบ</h4>
             <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
-                <li><b>เตรียมข้อสอบ:</b> อาจารย์ตั้งค่าพารามิเตอร์และเลือกภาวะผิดปกติไว้ล่วงหน้า</li>
+                <li><b>เตรียมข้อสอบ:</b> อาจารย์เลื่อนแถบตั้งค่า หรือเลือกภาวะผิดปกติไว้ล่วงหน้า</li>
                 <li><b>ซ่อนเฉลย:</b> กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> (ด้านบน) ระบบจะซ่อนคำเฉลยและแสดงฟอร์มตอบคำถามขึ้นมาแทน</li>
                 <li><b>ทดสอบ:</b> ให้นักศึกษาวิเคราะห์กราฟแล้วเลือกคำตอบที่คิดว่าถูกต้องในช่อง <i>"📝 โหมดทดสอบ"</i></li>
                 <li><b>ตรวจคำตอบ:</b> กดปุ่ม <i>"ส่งคำตอบ / ดูเฉลย"</i> เพื่อตรวจความถูกต้อง พร้อมแสดงหน้าต่างอธิบายกราฟและแนวทางแก้ไข</li>
@@ -254,13 +250,11 @@
             'sawtooth': 'Respi.mp4', 'delay_cycle': 'Respi.mp4', 'over_assist': 'Rest.mp4'
         };
 
-        // ตัวแปรส่วนกลางสำหรับระบบ Exam Mode
         let isExamMode = false; 
         let currentActualAbnormal = 'normal';
         let currentWaveDesc = '';
         let currentGuideTxt = '';
 
-        // ฟังก์ชันเปิด/ปิด โหมดสอบ
         function toggleExamMode() {
             isExamMode = !isExamMode;
             const examBtn = document.getElementById('examModeBtn');
@@ -280,7 +274,6 @@
             }
         }
 
-        // ฟังก์ชันตรวจสอบคำตอบ
         function checkAnswer() {
             const studentAns = document.getElementById('studentAnswer').value;
             const titleEl = document.getElementById('answerTitle');
@@ -295,7 +288,6 @@
                 titleEl.innerHTML = "❌ ยังไม่ถูกต้อง";
                 titleEl.style.color = "#c0392b";
                 
-                // ดึงข้อความของคำตอบที่ถูกต้องมาแสดง
                 const selectEl = document.getElementById('studentAnswer');
                 let correctText = "";
                 for(let i=0; i<selectEl.options.length; i++) {
@@ -307,14 +299,11 @@
                 feedbackEl.style.color = "#c0392b";
             }
 
-            // ใส่คำอธิบายเฉลยลงใน Modal
             document.getElementById('answerWaveDesc').innerText = currentWaveDesc;
             document.getElementById('answerGuide').innerText = currentGuideTxt;
-            
             document.getElementById('answerModal').style.display = 'block';
         }
 
-        // ฟังก์ชันเริ่มใหม่ (Reset)
         function resetApp() {
             document.getElementById('modeSelect').value = 'pcv';
             document.getElementById('flowSelect').value = 'decel';
@@ -330,8 +319,8 @@
             document.getElementById('slopeSlider').value = 0;
             document.getElementById('slopeVal').innerText = '0';
             
-            if (isExamMode) toggleExamMode(); // ปิด Exam mode ถ้าเปิดอยู่
-            document.getElementById('studentAnswer').value = 'normal'; // รีเซ็ตคำตอบเด็ก
+            if (isExamMode) toggleExamMode(); 
+            document.getElementById('studentAnswer').value = 'normal'; 
             switchPatientVideo();
         }
 
@@ -345,7 +334,24 @@
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
-            const abnormalState = document.getElementById('abnormalSelect').value;
+            let abnormalState = document.getElementById('abnormalSelect').value;
+            
+            // ดึงค่า Slider มาประเมิน Auto-Detection สำหรับวิดีโอด้วย
+            let rr = parseInt(document.getElementById('rrSlider').value);
+            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
+            let cycleTimeSec = 60 / rr;
+            if(tiSetting >= cycleTimeSec - 0.2) tiSetting = cycleTimeSec - 0.2;
+            let teTimeSec = cycleTimeSec - tiSetting;
+
+            // ระบบ Auto-Detect ทำงานเมื่อเลือกโหมดปกติ
+            if (abnormalState === 'normal') {
+                if (teTimeSec < 0.65) {
+                    abnormalState = 'autopeep'; // Te สั้นไป บังคับใช้วิดีโอ Auto-PEEP
+                } else if (rr <= 15 && tiSetting >= 2.0) {
+                    abnormalState = 'prolong';  // Ti ยาวไป บังคับใช้วิดีโอ Prolong (Active Exhalation)
+                }
+            }
+
             const videoEl = document.getElementById('patientVideo');
             
             let videoKey = abnormalState;
@@ -353,6 +359,7 @@
                 if (mode === 'pcv' && flowType === 'sine') videoKey = 'scoop_mild'; 
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist'; 
             }
+            
             let targetSrc = patientVideos[videoKey];
             if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
                 videoEl.src = targetSrc;
@@ -395,7 +402,7 @@
             
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
-            const abnormal = document.getElementById('abnormalSelect').value;
+            let abnormal = document.getElementById('abnormalSelect').value;
             
             let rr = parseInt(document.getElementById('rrSlider').value);
             const pi = parseInt(document.getElementById('piSlider').value);
@@ -417,6 +424,20 @@
 
             const teTimeSec = cycleTimeSec - tiSetting;
             document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
+
+            // ==========================================
+            // ระบบ Auto-Detection (ตรวจจับความสัมพันธ์ RR กับ Ti อัตโนมัติ)
+            // ==========================================
+            let isAutoDetected = false;
+            if (abnormal === 'normal') {
+                if (teTimeSec < 0.65) {
+                    abnormal = 'autopeep'; // Te สั้นเกินไป ระบายลมไม่ทัน
+                    isAutoDetected = true;
+                } else if (rr <= 15 && tiSetting >= 2.0) {
+                    abnormal = 'prolong'; // Ti นานเกินไป ผู้ป่วยฝืนออก
+                    isAutoDetected = true;
+                }
+            }
 
             const amplitude = pi * 3.5; 
 
@@ -520,7 +541,7 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
-            // บันทึกคำตอบที่ถูกต้องไว้ในระบบหลังบ้าน
+            // บันทึกคำตอบที่ถูกต้องไว้ในระบบหลังบ้าน (รวมเคส Auto-detect)
             if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine') { currentActualAbnormal = 'scoop_mild'; }
             else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel') { currentActualAbnormal = 'over_assist'; }
             else { currentActualAbnormal = abnormal; }
@@ -535,7 +556,9 @@
                 waveDesc = "กราฟ Pressure พุ่งสูงเกินกว่า 35 cmH2O ซึ่งเสี่ยงต่อการเกิดถุงลมโป่งพองแตก";
             }
             else if (abnormal === 'autopeep') { 
-                txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; 
+                // เพิ่มข้อความบอกว่าตรวจจับอัตโนมัติ
+                txt = isAutoDetected ? "⚠️ เตือน: Auto-PEEP (ระบบตรวจพบจากการตั้งค่า Te สั้นเกินไป)" : "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
+                col = "#c0392b"; 
                 guideTxt = "ยืดเวลาหายใจออก (Te) หรือลด RR, ปรับค่า PEEP ให้เหมาะสม, พ่นยาขยายหลอดลมหากจำเป็น";
                 waveDesc = "กราฟ Flow ขาออก (Expiratory) สิ้นสุดโดยไม่แตะเส้นศูนย์ (Baseline) ก่อนเครื่องเริ่มจ่ายลมรอบถัดไป";
             }
@@ -580,7 +603,9 @@
                 waveDesc = "กราฟ Pressure ขาเข้าเว้าลึกลงอย่างชัดเจนจนเสียรูปทรง เครื่องจ่าย Flow ให้ไม่ทันความต้องการ";
             }
             else if (abnormal === 'prolong') { 
-                txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; 
+                // เพิ่มข้อความบอกว่าตรวจจับอัตโนมัติ
+                txt = isAutoDetected ? "⚠️ เตือน: Active Exhalation (ระบบตรวจพบจากการตั้งค่า Ti นานเกินไป)" : "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
+                col = "#e67e22"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
                 waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
             }
@@ -597,7 +622,6 @@
                 }
             }
             
-            // เตรียมข้อมูลคำเฉลยเก็บไว้ให้ Pop-up
             currentWaveDesc = waveDesc;
             currentGuideTxt = guideTxt;
 
