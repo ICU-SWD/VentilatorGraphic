@@ -21,7 +21,7 @@
         .btn-reset { background-color: #34495e; } .btn-reset:hover { background-color: #2c3e50; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
-        .modal-content { background-color: #fff; margin: 8% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left; position: relative; animation: slideDown 0.3s ease-out; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 700px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left; position: relative; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .close-btn { color: #95a5a6; position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .close-btn:hover { color: #e74c3c; }
@@ -35,11 +35,11 @@
         .patient-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity 0.3s; }
         .vent-screen-light { position: absolute; left: 20px; bottom: 20px; width: 15px; height: 15px; background: #34495e; z-index: 2; border-radius: 50%; opacity: 0.9; transition: background 0.1s, box-shadow 0.1s; }
 
-        .status-box { background: white; padding: 12px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .status-box { background: white; padding: 12px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;}
         .status-box p { margin: 5px 0; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; letter-spacing: 0.5px; }
         
-        .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; }
+        .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; transition: opacity 0.3s;}
         
         canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
@@ -197,19 +197,33 @@
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
-    <!-- Popup คู่มือการใช้งาน -->
+    <!-- Popup คู่มือการใช้งาน (ปรับปรุงใหม่ แบ่งโหมดชัดเจน) -->
     <div id="guideModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="document.getElementById('guideModal').style.display='none'">&times;</span>
+            <span class="close-btn" onclick="closeGuide()">&times;</span>
             <h3 style="color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f39c12; padding-bottom: 10px;">📖 ขั้นตอนการใช้งาน (For Instructors)</h3>
-            <p style="color: #7f8c8d; font-size: 14px;">โปรแกรมออกแบบมาเพื่อสร้างสถานการณ์จำลองสำหรับการฝึกวิเคราะห์ Patient-Ventilator Asynchrony</p>
-            <ol style="color: #34495e; font-size: 15px; line-height: 1.8; margin-top: 20px;">
-                <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i> และ ปรับ <i>Asynchrony & Alarms</i> ตามเคสที่ต้องการทดสอบนักศึกษา</li>
-                <li><b>เปิดโหมดทดสอบ:</b> กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> ด้านบน ระบบจะทำการ <b>"ซ่อนคำเฉลย"</b> และแสดงฟอร์มตอบคำถามขึ้นมาแทน</li>
-                <li><b>ให้นักศึกษาวิเคราะห์:</b> ให้นักศึกษาสังเกตความสัมพันธ์ของกราฟ และเลือกคำตอบในช่อง <i>"📝 เลือกคำตอบของคุณ"</i></li>
-                <li><b>เฉลยคำตอบ:</b> ให้นักศึกษากดปุ่มส่งคำตอบ ระบบจะตรวจความถูกต้องและแสดงหน้าต่างคำอธิบายกราฟพร้อมวิธีแก้ไขขึ้นมา</li>
-                <li><b>ขึ้นข้อใหม่:</b> กดปุ่ม <span style="background:#34495e; color:white; padding: 2px 5px; border-radius: 4px;">🔄 เริ่มใหม่ (Reset)</span> เพื่อล้างค่าทั้งหมดและตั้งโจทย์ข้อต่อไป</li>
+            <p style="color: #7f8c8d; font-size: 14px;">โปรแกรมออกแบบมาเพื่อสร้างสถานการณ์จำลองสำหรับการฝึกวิเคราะห์ Patient-Ventilator Asynchrony โดยแบ่งเป็น 2 รูปแบบการใช้งานดังนี้</p>
+            
+            <h4 style="color: #2980b9; margin-bottom: 5px; margin-top: 20px;">▶️ 1. โหมดจำลองสถานการณ์ (Simulation Mode) - สำหรับสอน</h4>
+            <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
+                <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i>, <i>Flow Pattern</i> และปรับพารามิเตอร์ต่างๆ ตามเคสที่ต้องการ</li>
+                <li><b>จำลองความผิดปกติ:</b> เลือกเมนู <i>Asynchrony & Alarms</i> เพื่อให้ระบบแสดงกราฟฟิกและวิดีโออาการคนไข้</li>
+                <li><b>การสอน:</b> ให้นักศึกษาสังเกตความสัมพันธ์ของกราฟ ควบคู่กับอาการคนไข้จำลอง</li>
+                <li><b>ดูเฉลย:</b> อาจารย์สามารถใช้คำอธิบายกราฟและแนวทางการแก้ไขที่มุมซ้ายล่าง เพื่ออธิบายให้นักศึกษาฟังได้ทันที</li>
             </ol>
+
+            <h4 style="color: #8e44ad; margin-bottom: 5px;">▶️ 2. โหมดทดสอบนักศึกษา (Exam Mode) - สำหรับสอบ</h4>
+            <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
+                <li><b>เตรียมข้อสอบ:</b> อาจารย์ตั้งค่าพารามิเตอร์และเลือกภาวะผิดปกติไว้ล่วงหน้า</li>
+                <li><b>ซ่อนเฉลย:</b> กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> (ด้านบน) ระบบจะซ่อนคำเฉลยและแสดงฟอร์มตอบคำถามขึ้นมาแทน</li>
+                <li><b>ทดสอบ:</b> ให้นักศึกษาวิเคราะห์กราฟแล้วเลือกคำตอบที่คิดว่าถูกต้องในช่อง <i>"📝 โหมดทดสอบ"</i></li>
+                <li><b>ตรวจคำตอบ:</b> กดปุ่ม <i>"ส่งคำตอบ / ดูเฉลย"</i> เพื่อตรวจความถูกต้อง พร้อมแสดงหน้าต่างอธิบายกราฟและแนวทางแก้ไข</li>
+                <li><b>ข้อต่อไป:</b> กดปุ่ม <span style="background:#34495e; color:white; padding: 2px 5px; border-radius: 4px;">🔄 เริ่มใหม่ (Reset)</span> เพื่อเคลียร์หน้าจอและตั้งโจทย์ข้อถัดไป</li>
+            </ol>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-capture" style="background-color: #27ae60; padding: 10px 20px; margin-top:0;" onclick="closeGuide()">รับทราบ เริ่มใช้งาน</button>
+            </div>
         </div>
     </div>
 
@@ -322,6 +336,11 @@
         }
 
         function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
+        function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('guideModal')) { closeGuide(); }
+            if (event.target == document.getElementById('answerModal')) { document.getElementById('answerModal').style.display = 'none'; }
+        }
         
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
