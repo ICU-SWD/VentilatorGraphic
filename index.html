@@ -14,11 +14,11 @@
         .header-title { color: #2c3e50; margin: 0 0 5px 0; font-size: 26px; font-weight: 700; }
         .subtitle { color: #7f8c8d; font-size: 15px; margin: 0; }
 
-        /* สไตล์สำหรับปุ่มคู่มือและปุ่ม Exam Mode */
-        .btn-guide { background-color: #f39c12; color: white; cursor: pointer; border: none; font-weight: bold; padding: 6px 15px; font-size: 14px; border-radius: 6px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .btn-guide:hover { background-color: #d68910; }
-        .btn-exam { background-color: #8e44ad; color: white; cursor: pointer; border: none; font-weight: bold; padding: 6px 15px; font-size: 14px; border-radius: 6px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .btn-exam:hover { background-color: #732d91; }
+        /* สไตล์สำหรับปุ่มเมนูด้านบน */
+        .top-btn { cursor: pointer; border: none; font-weight: bold; padding: 8px 16px; font-size: 14px; border-radius: 6px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); color: white; }
+        .btn-guide { background-color: #f39c12; } .btn-guide:hover { background-color: #d68910; }
+        .btn-exam { background-color: #8e44ad; } .btn-exam:hover { background-color: #732d91; }
+        .btn-reset { background-color: #34495e; } .btn-reset:hover { background-color: #2c3e50; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
         .modal-content { background-color: #fff; margin: 8% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left; position: relative; animation: slideDown 0.3s ease-out; }
@@ -35,12 +35,11 @@
         .patient-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity 0.3s; }
         .vent-screen-light { position: absolute; left: 20px; bottom: 20px; width: 15px; height: 15px; background: #34495e; z-index: 2; border-radius: 50%; opacity: 0.9; transition: background 0.1s, box-shadow 0.1s; }
 
-        .status-box { background: white; padding: 12px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;}
+        .status-box { background: white; padding: 12px; border-radius: 6px; border: 1px solid #bdc3c7; text-align: left; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .status-box p { margin: 5px 0; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; letter-spacing: 0.5px; }
         
-        /* สไตล์สำหรับกล่องคำอธิบายกราฟและ Guideline */
-        .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; transition: opacity 0.3s;}
+        .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; }
         
         canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
@@ -71,10 +70,11 @@
                 <h2 class="header-title">VENTILATOR GRAPHICS SIMULATOR</h2>
                 <div class="subtitle">Advanced Clinical & Asynchrony Module | พัฒนาโดย นายปฏิยุทธ์ อุปพงษ์</div>
                 
-                <!-- กล่องรวมปุ่มเมนูด้านบน -->
+                <!-- แถบเมนูปุ่มด้านบน -->
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn-guide" onclick="openGuide()">📖 ขั้นตอนการใช้งาน</button>
-                    <button id="examModeBtn" class="btn-exam" onclick="toggleExamMode()">🎓 เปิด Exam Mode</button>
+                    <button class="top-btn btn-guide" onclick="openGuide()">📖 ขั้นตอนการใช้งาน</button>
+                    <button id="examModeBtn" class="top-btn btn-exam" onclick="toggleExamMode()">🎓 เปิด Exam Mode</button>
+                    <button class="top-btn btn-reset" onclick="resetApp()">🔄 เริ่มใหม่ (Reset)</button>
                 </div>
             </div>
         </div>
@@ -94,13 +94,33 @@
                     <p style="color:#7f8c8d; font-size: 12px; margin-top: 10px; margin-bottom: 4px; font-weight: bold;">อาการคลินิก / แจ้งเตือน</p>
                     <p><span id="clinicalStatusText" style="font-weight:bold; color:#27ae60; font-size: 14px;">ปกติ (Synchronized)</span></p>
                     
+                    <!-- ส่วนเฉลย (ซ่อนตอนสอบ) -->
                     <div id="guidelineSection" class="guideline-section">
-                        <!-- คำอธิบายลักษณะกราฟ -->
                         <p style="color:#e67e22; font-size: 12px; margin-bottom: 4px; font-weight: bold;">📊 ลักษณะกราฟ (Waveform)</p>
                         <p id="waveformDescText" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;">Pressure และ Flow สอดคล้องกับการตั้งค่า</p>
 
                         <p style="color:#3498db; font-size: 12px; margin-bottom: 4px; font-weight: bold;">💡 แนวทางการแก้ไข</p>
                         <p id="guidelineText" style="font-size: 13px; color: #2c3e50; line-height: 1.4;">สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์</p>
+                    </div>
+
+                    <!-- ส่วนฟอร์มตอบคำถาม (แสดงเฉพาะตอนสอบ) -->
+                    <div id="examSection" class="guideline-section" style="display: none; background: #fdfefe; padding: 10px; border-radius: 6px; border: 1px solid #dcdde1;">
+                        <p style="color:#8e44ad; font-size: 13px; font-weight: bold; margin-bottom: 8px;">📝 โหมดทดสอบ: วิเคราะห์ความผิดปกติ</p>
+                        <select id="studentAnswer" style="margin-bottom: 10px;">
+                            <option value="normal">ปกติ (Normal / Synchronized)</option>
+                            <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
+                            <option value="auto_trigger">เครื่องตีเอง (Auto-Triggering)</option>
+                            <option value="double_trigger">กระตุ้นซ้อน (Double Triggering)</option>
+                            <option value="premature_cycle">ตัดก่อน (Premature Cycling)</option>
+                            <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
+                            <option value="sawtooth">มีน้ำ/เสมหะในสาย (Sawtooth Pattern)</option>
+                            <option value="delay_cycle">ตัดช้า (Delayed Cycling)</option>
+                            <option value="scoop_mild">Pressure Scooped out (Mild)</option>
+                            <option value="scoop_severe">Pressure Scooped out (Severe)</option>
+                            <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
+                            <option value="over_assist">ช่วยเหลือมากเกินไป (Over-assist)</option>
+                        </select>
+                        <button class="top-btn btn-exam" style="width: 100%; padding: 8px;" onclick="checkAnswer()">ส่งคำตอบ / ดูเฉลย</button>
                     </div>
                 </div>
             </div>
@@ -177,23 +197,36 @@
         <div id="saveStatus" class="status-msg"></div>
     </div>
 
-    <!-- โครงสร้าง Popup คู่มือการใช้งาน -->
+    <!-- Popup คู่มือการใช้งาน -->
     <div id="guideModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeGuide()">&times;</span>
+            <span class="close-btn" onclick="document.getElementById('guideModal').style.display='none'">&times;</span>
             <h3 style="color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f39c12; padding-bottom: 10px;">📖 ขั้นตอนการใช้งาน (For Instructors)</h3>
-            <p style="color: #7f8c8d; font-size: 14px;">โปรแกรมนี้ออกแบบมาเพื่อใช้สร้างสถานการณ์จำลอง (Simulation) สำหรับฝึกสอนการตั้งค่าเครื่องช่วยหายใจและการวิเคราะห์ Patient-Ventilator Asynchrony</p>
+            <p style="color: #7f8c8d; font-size: 14px;">โปรแกรมออกแบบมาเพื่อสร้างสถานการณ์จำลองสำหรับการฝึกวิเคราะห์ Patient-Ventilator Asynchrony</p>
             <ol style="color: #34495e; font-size: 15px; line-height: 1.8; margin-top: 20px;">
-                <li><b>ตั้งค่าพื้นฐาน:</b> เลือก <i>Mode (โหมด)</i> และ <i>Flow Pattern</i> เพื่อกำหนดรูปแบบการจ่ายลมพื้นฐาน</li>
-                <li><b>ปรับพารามิเตอร์:</b> เลื่อนแถบตั้งค่า RR, Ti, Pressure, PEEP และ Slope ให้ตรงกับเคสผู้ป่วยที่ต้องการนำมาสอน (ระบบจะคำนวณ I:E Ratio และ Ppeak ให้อัตโนมัติ)</li>
-                <li><b>จำลองความผิดปกติ:</b> เลือกเมนู <i>Asynchrony & Alarms</i> เพื่อสั่งให้ระบบแทรกกราฟฟิกจำลองภาวะผิดปกติต่างๆ (เช่น Auto-PEEP, หายใจซ้อน, หรือมีน้ำในสาย) ลงบนหน้าจอ</li>
-                <li><b>การเรียนการสอน:</b> ให้นักศึกษาสังเกต <i>รูปทรงของกราฟ (Waveform)</i> ทางขวา ควบคู่กับ <i>อาการคนไข้จำลอง (Video)</i> ทางซ้าย เพื่อวิเคราะห์ปัญหา</li>
-                <li><b>โหมดทดสอบ:</b> อาจารย์สามารถกดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> ด้านบน เพื่อ "ซ่อนเฉลยและวิธีแก้ไขทั้งหมด" และให้นักศึกษาฝึกประเมินกราฟด้วยตัวเอง</li>
-                <li><b>ทำสื่อการสอน:</b> กดปุ่ม <i>📸 บันทึกภาพกราฟ</i> ด้านล่าง เพื่อดาวน์โหลดรูปไปแปะในสไลด์ PowerPoint หรือข้อสอบได้แบบคมชัด</li>
+                <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i> และ ปรับ <i>Asynchrony & Alarms</i> ตามเคสที่ต้องการทดสอบนักศึกษา</li>
+                <li><b>เปิดโหมดทดสอบ:</b> กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> ด้านบน ระบบจะทำการ <b>"ซ่อนคำเฉลย"</b> และแสดงฟอร์มตอบคำถามขึ้นมาแทน</li>
+                <li><b>ให้นักศึกษาวิเคราะห์:</b> ให้นักศึกษาสังเกตความสัมพันธ์ของกราฟ และเลือกคำตอบในช่อง <i>"📝 เลือกคำตอบของคุณ"</i></li>
+                <li><b>เฉลยคำตอบ:</b> ให้นักศึกษากดปุ่มส่งคำตอบ ระบบจะตรวจความถูกต้องและแสดงหน้าต่างคำอธิบายกราฟพร้อมวิธีแก้ไขขึ้นมา</li>
+                <li><b>ขึ้นข้อใหม่:</b> กดปุ่ม <span style="background:#34495e; color:white; padding: 2px 5px; border-radius: 4px;">🔄 เริ่มใหม่ (Reset)</span> เพื่อล้างค่าทั้งหมดและตั้งโจทย์ข้อต่อไป</li>
             </ol>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn-capture" style="background-color: #27ae60; padding: 10px 20px; margin-top:0;" onclick="closeGuide()">รับทราบ เริ่มใช้งาน</button>
+        </div>
+    </div>
+
+    <!-- Popup เฉลยคำตอบ -->
+    <div id="answerModal" class="modal">
+        <div class="modal-content" style="text-align: center; max-width: 500px;">
+            <span class="close-btn" onclick="document.getElementById('answerModal').style.display='none'">&times;</span>
+            <h2 id="answerTitle" style="margin-top: 0;"></h2>
+            <p id="answerFeedback" style="font-size: 16px; font-weight: bold;"></p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; border: 1px solid #dcdde1;">
+                <p style="color:#e67e22; font-size: 13px; font-weight: bold; margin-bottom: 5px;">📊 ลักษณะกราฟ (Waveform)</p>
+                <p id="answerWaveDesc" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;"></p>
+                <p style="color:#3498db; font-size: 13px; font-weight: bold; margin-bottom: 5px;">💡 แนวทางการแก้ไข</p>
+                <p id="answerGuide" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 0;"></p>
             </div>
+            <button class="top-btn btn-reset" style="margin-top: 20px; width: 100%;" onclick="document.getElementById('answerModal').style.display='none'">ปิดหน้าต่าง</button>
         </div>
     </div>
 
@@ -201,46 +234,95 @@
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         const patientVideos = {
-            'normal': 'Rest.mp4',
-            'scoop_mild': 'Respi.mp4',
-            'scoop_severe': 'Airhunger.mp4',
-            'autopeep': 'Respi.mp4',
-            'prolong': 'Respi.mp4',
-            'auto_trigger': 'Respi.mp4',
-            'double_trigger': 'Respi.mp4', 
-            'premature_cycle': 'Respi.mp4',
-            'trigger_fail': 'Rest.mp4',
-            'sawtooth': 'Respi.mp4',
-            'delay_cycle': 'Respi.mp4',
-            'over_assist': 'Rest.mp4'
+            'normal': 'Rest.mp4', 'scoop_mild': 'Respi.mp4', 'scoop_severe': 'Airhunger.mp4',
+            'autopeep': 'Respi.mp4', 'prolong': 'Respi.mp4', 'auto_trigger': 'Respi.mp4',
+            'double_trigger': 'Respi.mp4', 'premature_cycle': 'Respi.mp4', 'trigger_fail': 'Rest.mp4',
+            'sawtooth': 'Respi.mp4', 'delay_cycle': 'Respi.mp4', 'over_assist': 'Rest.mp4'
         };
 
-        let isExamMode = false; // ตัวแปรสำหรับเช็คสถานะโหมดทดสอบ
+        // ตัวแปรส่วนกลางสำหรับระบบ Exam Mode
+        let isExamMode = false; 
+        let currentActualAbnormal = 'normal';
+        let currentWaveDesc = '';
+        let currentGuideTxt = '';
 
-        // ฟังก์ชันสำหรับเปิด/ปิดโหมด Exam Mode
+        // ฟังก์ชันเปิด/ปิด โหมดสอบ
         function toggleExamMode() {
             isExamMode = !isExamMode;
             const examBtn = document.getElementById('examModeBtn');
             const guidelineSection = document.getElementById('guidelineSection');
+            const examSection = document.getElementById('examSection');
             
             if (isExamMode) {
                 examBtn.innerHTML = "🔓 ปิด Exam Mode";
-                examBtn.style.backgroundColor = "#e74c3c"; // เปลี่ยนปุ่มเป็นสีแดงเพื่อเตือนว่าเปิดโหมดอยู่
-                guidelineSection.style.display = "none";   // ซ่อนกล่องคำเฉลย
+                examBtn.style.backgroundColor = "#e74c3c"; 
+                guidelineSection.style.display = "none";   
+                examSection.style.display = "block";       
             } else {
                 examBtn.innerHTML = "🎓 เปิด Exam Mode";
-                examBtn.style.backgroundColor = "#8e44ad"; // เปลี่ยนปุ่มกลับเป็นสีม่วง
-                guidelineSection.style.display = "block";  // แสดงกล่องคำเฉลย
+                examBtn.style.backgroundColor = "#8e44ad"; 
+                guidelineSection.style.display = "block";  
+                examSection.style.display = "none";        
             }
         }
 
-        // ฟังก์ชันเปิด/ปิด Popup คู่มือ
-        function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
-        function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('guideModal')) { closeGuide(); }
+        // ฟังก์ชันตรวจสอบคำตอบ
+        function checkAnswer() {
+            const studentAns = document.getElementById('studentAnswer').value;
+            const titleEl = document.getElementById('answerTitle');
+            const feedbackEl = document.getElementById('answerFeedback');
+            
+            if (studentAns === currentActualAbnormal) {
+                titleEl.innerHTML = "✅ ถูกต้องยอดเยี่ยม!";
+                titleEl.style.color = "#27ae60";
+                feedbackEl.innerHTML = "คุณวิเคราะห์กราฟและอาการคนไข้ได้ถูกต้อง";
+                feedbackEl.style.color = "#27ae60";
+            } else {
+                titleEl.innerHTML = "❌ ยังไม่ถูกต้อง";
+                titleEl.style.color = "#c0392b";
+                
+                // ดึงข้อความของคำตอบที่ถูกต้องมาแสดง
+                const selectEl = document.getElementById('studentAnswer');
+                let correctText = "";
+                for(let i=0; i<selectEl.options.length; i++) {
+                    if(selectEl.options[i].value === currentActualAbnormal) {
+                        correctText = selectEl.options[i].text; break;
+                    }
+                }
+                feedbackEl.innerHTML = "คำตอบที่ถูกต้องคือ: " + correctText;
+                feedbackEl.style.color = "#c0392b";
+            }
+
+            // ใส่คำอธิบายเฉลยลงใน Modal
+            document.getElementById('answerWaveDesc').innerText = currentWaveDesc;
+            document.getElementById('answerGuide').innerText = currentGuideTxt;
+            
+            document.getElementById('answerModal').style.display = 'block';
         }
 
+        // ฟังก์ชันเริ่มใหม่ (Reset)
+        function resetApp() {
+            document.getElementById('modeSelect').value = 'pcv';
+            document.getElementById('flowSelect').value = 'decel';
+            document.getElementById('abnormalSelect').value = 'normal';
+            document.getElementById('rrSlider').value = 15;
+            document.getElementById('rrVal').innerText = '15';
+            document.getElementById('tiSlider').value = 1.0;
+            document.getElementById('tiVal').innerText = '1.0';
+            document.getElementById('piSlider').value = 15;
+            document.getElementById('piVal').innerText = '15';
+            document.getElementById('peepSlider').value = 5;
+            document.getElementById('peepVal').innerText = '5';
+            document.getElementById('slopeSlider').value = 0;
+            document.getElementById('slopeVal').innerText = '0';
+            
+            if (isExamMode) toggleExamMode(); // ปิด Exam mode ถ้าเปิดอยู่
+            document.getElementById('studentAnswer').value = 'normal'; // รีเซ็ตคำตอบเด็ก
+            switchPatientVideo();
+        }
+
+        function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
+        
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
@@ -279,7 +361,7 @@
                         document.getElementById('peepVal').innerText = data.defaultSettings.peep;
                     }
                 }
-            } catch (error) { console.error("Offline Mode"); } 
+            } catch (error) {} 
             finally { switchPatientVideo(); }
         }
 
@@ -354,12 +436,8 @@
 
                 if (time < drawTiLength && !isDoubleTriggerBreath) { 
                     if(mode === 'psv' && time < 8) p_y += 12; 
-
-                    if(mode === 'cmv') { 
-                        p_y = 140 - (time / drawTiLength) * amplitude; 
-                    } else { 
-                        p_y = 140 - amplitude; 
-                    }
+                    if(mode === 'cmv') { p_y = 140 - (time / drawTiLength) * amplitude; } 
+                    else { p_y = 140 - amplitude; }
 
                     if (flowType === 'square') f_y = 290 - 70 * flowRiseSlope; 
                     else if (flowType === 'decel') f_y = 290 - (70 * flowRiseSlope) * Math.exp(-time/30); 
@@ -367,20 +445,14 @@
 
                     if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 18;
                     if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 45; 
-                    
-                    if(abnormal === 'delay_cycle' && time > drawTiLength - 25) {
-                        p_y -= 25; f_y = 290 + 20; 
-                    }
+                    if(abnormal === 'delay_cycle' && time > drawTiLength - 25) { p_y -= 25; f_y = 290 + 20; }
 
                 } else if (!isDoubleTriggerBreath) {
                     let expTime = time - drawTiLength;
                     p_y = 140 - amplitude * Math.exp(-expTime/15);
                     
-                    if(abnormal === 'autopeep') {
-                        f_y = 290 + 75 * Math.exp(-expTime/65); 
-                    } else {
-                        f_y = 290 + 75 * Math.exp(-expTime/20); 
-                    }
+                    if(abnormal === 'autopeep') { f_y = 290 + 75 * Math.exp(-expTime/65); } 
+                    else { f_y = 290 + 75 * Math.exp(-expTime/20); }
 
                     if(abnormal === 'auto_trigger') f_y -= 15;
 
@@ -388,14 +460,12 @@
                         let pull = Math.sin(expTime * Math.PI / 25) * 35; 
                         p_y += pull * 0.4; f_y -= pull; 
                     }
-
                     if(abnormal === 'trigger_fail' && time > cycleLength * 0.6 && time < cycleLength * 0.8) {
                         let effortLen = cycleLength * 0.2;
                         let effortT = time - (cycleLength * 0.6);
                         p_y += 15 * Math.sin(effortT * Math.PI / effortLen); 
                         f_y -= 25 * Math.sin(effortT * Math.PI / effortLen); 
                     }
-
                     if(abnormal === 'prolong' && time < drawTiLength + 20) { p_y -= 15; }
                 }
 
@@ -431,95 +501,90 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
+            // บันทึกคำตอบที่ถูกต้องไว้ในระบบหลังบ้าน
+            if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine') { currentActualAbnormal = 'scoop_mild'; }
+            else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel') { currentActualAbnormal = 'over_assist'; }
+            else { currentActualAbnormal = abnormal; }
+
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             let guideTxt = "สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์";
             let waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) และ Flow เป็น decelerate ผู้ป่วยไม่ออกแรงเอง สอดคล้องกับการตั้งค่าเพื่อให้ผู้ป่วยได้พัก";
             
             if (ppeak > 35) { 
-                txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; 
-                col = "#c0392b"; 
+                txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; 
                 guideTxt = "ลด Pressure/Volume, ลด PEEP, ตรวจสอบภาวะลมรั่วในช่องอก (Pneumothorax) หรือทางเดินหายใจอุดกั้น";
                 waveDesc = "กราฟ Pressure พุ่งสูงเกินกว่า 35 cmH2O ซึ่งเสี่ยงต่อการเกิดถุงลมโป่งพองแตก";
             }
             else if (abnormal === 'autopeep') { 
-                txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; 
-                col = "#c0392b"; 
+                txt = "⚠️ เตือน: Auto-PEEP (ลมค้างในปอด)"; col = "#c0392b"; 
                 guideTxt = "ยืดเวลาหายใจออก (Te) หรือลด RR, ปรับค่า PEEP ให้เหมาะสม, พ่นยาขยายหลอดลมหากจำเป็น";
                 waveDesc = "กราฟ Flow ขาออก (Expiratory) สิ้นสุดโดยไม่แตะเส้นศูนย์ (Baseline) ก่อนเครื่องเริ่มจ่ายลมรอบถัดไป";
             }
             else if (abnormal === 'auto_trigger') { 
-                txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; 
-                col = "#c0392b"; 
+                txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; col = "#c0392b"; 
                 guideTxt = "ค้นหาจุดที่ลมรั่วในระบบ (Circuit leak) หรือปรับ Trigger sensitivity ให้แข็งขึ้น (ลดความไว)";
                 waveDesc = "กราฟ Flow ไม่กลับไปแตะ 0 และเกิดรอบการหายใจถี่กว่าตั้งค่าโดยไม่มีรอยเว้าของ Pressure จากแรงดูดผู้ป่วย";
             }
             else if (abnormal === 'double_trigger') { 
-                txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; 
-                col = "#c0392b"; 
+                txt = "🚨 เตือน: Double Triggering (หายใจซ้อน)"; col = "#c0392b"; 
                 guideTxt = "เพิ่มเวลา Ti, เพิ่ม Pressure/Volume ให้เพียงพอต่อความต้องการ หรือพิจารณาให้ยา Sedative หากจำเป็น";
                 waveDesc = "เกิดกราฟการหายใจ 2 รอบติดกัน โดยที่รอบแรกยังหายใจออกไม่สุด กราฟ Pressure มักพุ่งสูงและต่อกัน";
             }
             else if (abnormal === 'premature_cycle') { 
-                txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; 
-                col = "#e67e22"; 
+                txt = "⚠️ เตือน: Premature Cycling (เครื่องตัดเร็วไป)"; col = "#e67e22"; 
                 guideTxt = "ยืดเวลาหายใจเข้า (Ti) ให้ยาวขึ้น หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์ต่ำลง";
                 waveDesc = "กราฟ Flow ตีกลับเป็นบวก (แหว่งขึ้น) ในช่วงเริ่มต้นการหายใจออก และกราฟ Pressure ตกวูบ";
             }
             else if (abnormal === 'trigger_fail') { 
-                txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; 
-                col = "#8e44ad"; 
+                txt = "⚠️ เตือน: Trigger Failure (เครื่องไม่จับแรงผู้ป่วย)"; col = "#8e44ad"; 
                 guideTxt = "ปรับ Trigger sensitivity ให้ไวขึ้น (ตั้งค่าตัวเลขให้เข้าใกล้ 0) หรือตรวจสอบภาวะ Auto-PEEP";
                 waveDesc = "พบรอยหยัก (Dip) ที่กราฟ Pressure และ Flow ขยับขึ้นช่วงหายใจออก แต่ไม่มีรอบการหายใจตามมา";
             }
             else if (abnormal === 'sawtooth') { 
-                txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; 
-                col = "#3498db"; 
+                txt = "⚠️ เตือน: Sawtooth Pattern (มีน้ำ/เสมหะในสาย)"; col = "#3498db"; 
                 guideTxt = "ทำการดูดเสมหะ (Suction) ให้ผู้ป่วย หรือเทน้ำที่ขังอยู่ในสายเครื่องช่วยหายใจออก (Drain water)";
                 waveDesc = "กราฟ Pressure และ Flow มีลักษณะหยักและสั่นสะเทือนคล้ายฟันเลื่อย (Sawtooth) ตลอดแนว";
             }
             else if (abnormal === 'delay_cycle') { 
-                txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; 
-                col = "#8e44ad"; 
+                txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; col = "#8e44ad"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ลง หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์สูงขึ้นเพื่อให้ตัดเร็วขึ้น";
                 waveDesc = "พบรอยแหลม (Spike) พุ่งขึ้นที่กราฟ Pressure ช่วงท้ายการหายใจเข้า และ Flow แหว่งเป็นบวก";
             }
             else if (abnormal === 'scoop_mild') { 
-                txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; 
-                col = "#e67e22"; 
+                txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; col = "#e67e22"; 
                 guideTxt = "เพิ่ม Flow หรือปรับ Rise Time (Slope) ให้เร็วขึ้น, พิจารณาเพิ่ม Pressure Support";
                 waveDesc = "กราฟ Pressure ขาเข้ามีลักษณะเว้าแหว่ง (Scooped out) โค้งลงเล็กน้อย แสดงถึงการออกแรงสูดช่วยของผู้ป่วย";
             }
             else if (abnormal === 'scoop_severe') { 
-                txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; 
-                col = "#c0392b"; 
+                txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; col = "#c0392b"; 
                 guideTxt = "เร่งการจ่าย Flow/Pressure ทันที, เปลี่ยนโหมดให้ตอบสนองผู้ป่วยดีขึ้น และหาสาเหตุของการหอบ";
                 waveDesc = "กราฟ Pressure ขาเข้าเว้าลึกลงอย่างชัดเจนจนเสียรูปทรง เครื่องจ่าย Flow ให้ไม่ทันความต้องการ";
             }
             else if (abnormal === 'prolong') { 
-                txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
-                col = "#e67e22"; 
+                txt = "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; col = "#e67e22"; 
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
                 waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
             }
             else if (abnormal === 'normal') {
                 if (mode === 'pcv' && flowType === 'sine') { 
-                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; 
-                    col = "#e67e22"; 
+                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; col = "#e67e22"; 
                     guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
                     waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
                 }
                 else if (mode === 'psv' && flowType === 'decel') { 
-                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; 
-                    col = "#e67e22"; 
+                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; col = "#e67e22"; 
                     guideTxt = "อาจลดระดับ Pressure Support ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
                     waveDesc = "กราฟ Flow ขาเข้ามีลักษณะลาดลง (Decelerating) ยาวนาน อาจเกิดจาก Pressure Support ที่สูงเกินไป";
                 }
             }
             
-            // เช็คว่าเปิดโหมดทดสอบอยู่หรือไม่
+            // เตรียมข้อมูลคำเฉลยเก็บไว้ให้ Pop-up
+            currentWaveDesc = waveDesc;
+            currentGuideTxt = guideTxt;
+
             if (isExamMode) {
                 statusTextEl.innerText = "❓ โหมดทดสอบ (โปรดวิเคราะห์กราฟด้วยตนเอง)";
-                statusTextEl.style.color = "#8e44ad"; // สีม่วง
+                statusTextEl.style.color = "#8e44ad"; 
             } else {
                 statusTextEl.innerText = txt; 
                 statusTextEl.style.color = col;
