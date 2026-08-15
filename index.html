@@ -18,7 +18,6 @@
         .btn-guide { background-color: #f39c12; } .btn-guide:hover { background-color: #d68910; }
         .btn-exam { background-color: #8e44ad; } .btn-exam:hover { background-color: #732d91; }
         .btn-reset { background-color: #34495e; } .btn-reset:hover { background-color: #2c3e50; }
-        .btn-audio { background-color: #e74c3c; } .btn-audio:hover { background-color: #c0392b; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
         .modal-content { background-color: #fff; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 700px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: left; position: relative; animation: slideDown 0.3s ease-out; }
@@ -41,15 +40,13 @@
         
         .guideline-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bdc3c7; transition: opacity 0.3s;}
         
-        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; max-width: 850px; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
+        canvas { background: #000; border-radius: 8px; border: 4px solid #34495e; width: 100%; box-shadow: inset 0 0 20px rgba(255,255,255,0.1); }
         
-        /* สไตล์สำหรับแถบแจ้งเตือนใต้กราฟ */
-        .alarm-banner-container { width: 100%; max-width: 850px; height: 35px; margin-top: 10px; position: relative; }
-        .alarm-banner { visibility: hidden; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; border-radius: 6px; letter-spacing: 1px;}
-        .flashing-alarm { animation: flashAlarm 0.8s infinite; }
-        @keyframes flashAlarm { 0% { opacity: 1; background-color: #c0392b; } 50% { opacity: 0.7; background-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; } 100% { opacity: 1; background-color: #c0392b; } }
-
-        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; margin-top: 10px; }
+        /* สไตล์สำหรับไฟกะพริบ Alarm */
+        @keyframes blinkAlarm { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+        .alarm-indicator { display: none; background-color: #c0392b; color: white; padding: 4px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; align-items: center; gap: 8px; box-shadow: 0 0 12px rgba(192, 57, 43, 0.8); animation: blinkAlarm 0.8s infinite; }
+        
+        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 8px; width: 100%; box-sizing: border-box; border: 1px solid #bdc3c7; }
         .control-group { display: flex; flex-direction: column; align-items: center; margin: 5px; flex: 1 1 140px; background: white; padding: 15px 10px; border-radius: 8px; border: 1px solid #dcdde1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative;}
         
         label { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; width: 100%; text-align: left;}
@@ -79,7 +76,6 @@
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
                     <button class="top-btn btn-guide" onclick="openGuide()">📖 ขั้นตอนการใช้งาน</button>
                     <button id="examModeBtn" class="top-btn btn-exam" onclick="toggleExamMode()">🎓 เปิด Exam Mode</button>
-                    <button id="audioBtn" class="top-btn btn-audio" onclick="toggleAudio()">🔈 เปิดเสียง Alarm</button>
                     <button class="top-btn btn-reset" onclick="resetApp()">🔄 เริ่มใหม่ (Reset)</button>
                 </div>
             </div>
@@ -129,28 +125,30 @@
                 </div>
             </div>
 
-            <!-- กราฟและกล่องแจ้งเตือน -->
+            <!-- ส่วนของกราฟและ Alarm Bar ด้านบน -->
             <div style="display: flex; flex-direction: column; width: 100%; max-width: 850px;">
-                <canvas id="ventCanvas" width="850" height="380"></canvas>
-                <!-- กล่อง Alarm ด้านล่างกราฟ ที่จะไม่ทำให้พื้นที่ขยับ -->
-                <div class="alarm-banner-container">
-                    <div id="alarmBanner" class="alarm-banner">
-                        🚨 ALARM / PATIENT ASYNCHRONY DETECTED 🚨
+                <!-- แถบเตือนภัยเหนือ Canvas -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; height: 30px; width: 100%;">
+                    <div id="topAlarmLight" class="alarm-indicator">
+                        <span style="font-size: 16px;">🚨</span> ALARM
                     </div>
+                    <button id="muteBtn" onclick="toggleMute()" style="display:none; background: #7f8c8d; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🔊 ปิดเสียงเตือน</button>
                 </div>
+                
+                <canvas id="ventCanvas" width="850" height="380"></canvas>
             </div>
         </div>
 
         <div class="control-panel">
             <div class="control-group" style="align-items: flex-start; flex: 1 1 180px;">
                 <label>Mode (โหมด)</label>
-                <select id="modeSelect" onchange="handleDropdownChange('modeFlow')">
+                <select id="modeSelect" onchange="handleModeFlowChange()">
                     <option value="cmv">CMV (Volume)</option>
                     <option value="pcv" selected>PCV (Pressure)</option>
                     <option value="psv">PSV (Support)</option>
                 </select>
                 <label style="margin-top: 10px;">Flow Pattern</label>
-                <select id="flowSelect" onchange="handleDropdownChange('modeFlow')">
+                <select id="flowSelect" onchange="handleModeFlowChange()">
                     <option value="square">Square</option>
                     <option value="decel" selected>Decelerating</option>
                     <option value="sine">Sine Wave</option>
@@ -159,7 +157,7 @@
 
             <div class="control-group" style="align-items: flex-start; flex: 1 1 200px;">
                 <label>Asynchrony & Alarms</label>
-                <select id="abnormalSelect" onchange="handleDropdownChange('abnormal')">
+                <select id="abnormalSelect" onchange="switchPatientVideo()">
                     <option value="normal">ปกติ (Normal)</option>
                     <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
                     <option value="auto_trigger">เครื่องตีเอง (Auto-Triggering / Leak)</option>
@@ -177,32 +175,32 @@
             <div class="control-group">
                 <label>อัตราหายใจ (RR)</label>
                 <div class="digital-value" id="rrVal">15</div>
-                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; checkAutoAsynchrony(); switchPatientVideo();">
+                <input type="range" id="rrSlider" min="10" max="35" value="15" oninput="document.getElementById('rrVal').innerText = this.value; checkAutoAsynchrony(); switchPatientVideo(); initAudioContext();">
             </div>
 
             <div class="control-group">
                 <label>เวลา (Ti) <span id="ieRatio" style="color:#3498db; font-size: 11px; float: right; margin-top: 2px;">1:3.0</span></label>
                 <div class="digital-value" id="tiVal">1.0</div>
-                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1); checkAutoAsynchrony(); switchPatientVideo();">
+                <input type="range" id="tiSlider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('tiVal').innerText = parseFloat(this.value).toFixed(1); checkAutoAsynchrony(); switchPatientVideo(); initAudioContext();">
             </div>
 
             <div class="control-group">
                 <label>Pressure</label>
                 <div class="ppeak-badge" id="ppeakDisplay">Ppeak: 20</div>
                 <div class="digital-value" id="piVal">15</div>
-                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value">
+                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value; initAudioContext();">
             </div>
 
             <div class="control-group">
                 <label>PEEP</label>
                 <div class="digital-value" id="peepVal">5</div>
-                <input type="range" id="peepSlider" min="0" max="20" value="5" oninput="document.getElementById('peepVal').innerText = this.value">
+                <input type="range" id="peepSlider" min="0" max="20" value="5" oninput="document.getElementById('peepVal').innerText = this.value; initAudioContext();">
             </div>
 
             <div class="control-group">
                 <label>Slope</label>
                 <div class="digital-value" id="slopeVal">0</div>
-                <input type="range" id="slopeSlider" min="0" max="10" value="0" oninput="document.getElementById('slopeVal').innerText = this.value">
+                <input type="range" id="slopeSlider" min="0" max="10" value="0" oninput="document.getElementById('slopeVal').innerText = this.value; initAudioContext();">
             </div>
         </div>
 
@@ -219,16 +217,18 @@
             
             <h4 style="color: #2980b9; margin-bottom: 5px; margin-top: 20px;">▶️ 1. โหมดจำลองสถานการณ์ (Simulation Mode) - สำหรับสอน</h4>
             <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
-                <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i>, <i>Flow Pattern</i> หรือปรับ <i>Asynchrony & Alarms</i></li>
-                <li><b>ระบบอัจฉริยะ (Auto-Detection):</b> หากเลือก PCV + Sine ระบบจะโชว์อาการหอบ (Mild Scooped out) ให้อัตโนมัติ หรือถ้าตั้ง RR และ Ti ชนกันจนระบายลมไม่ทัน ระบบจะบังคับขึ้น Auto-PEEP ให้เอง</li>
-                <li><b>ไฟเตือนสมจริง:</b> เมื่อกราฟมีความผิดปกติ หรือ Ppeak > 35 จะมีไฟกระพริบใต้จอภาพ พร้อมเสียงแจ้งเตือน (ต้องกดปุ่มเปิดเสียงก่อน)</li>
+                <li><b>ตั้งโจทย์:</b> เลือก <i>Mode</i>, <i>Flow Pattern</i> และปรับพารามิเตอร์ต่างๆ ตามเคสที่ต้องการ</li>
+                <li><b>ระบบอัจฉริยะ:</b> หากตั้งค่า RR และ Ti จน Te สั้นเกินไป ระบบจะแสดง <b>Auto-PEEP</b> อัตโนมัติ หรือถ้าเลือก Mode <b>PCV คู่กับ Sine wave</b> ระบบจะแสดงภาวะผู้ป่วยออกแรงต้าน (Mild Scooped out) อัตโนมัติเช่นกัน</li>
+                <li><b>ดูเฉลย:</b> อาจารย์สามารถใช้คำอธิบายกราฟและแนวทางการแก้ไขที่มุมซ้ายล่าง เพื่ออธิบายให้นักศึกษาฟังได้ทันที</li>
             </ol>
 
             <h4 style="color: #8e44ad; margin-bottom: 5px;">▶️ 2. โหมดทดสอบนักศึกษา (Exam Mode) - สำหรับสอบ</h4>
             <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
-                <li><b>ซ่อนเฉลย:</b> อาจารย์กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> ระบบจะซ่อนคำเฉลยและแสดงช่องให้ตอบคำถามแทน</li>
-                <li><b>ทดสอบ:</b> ให้นักศึกษาวิเคราะห์ไฟ Alarm และกราฟ จากนั้นเลือกคำตอบส่งใน <i>"📝 โหมดทดสอบ"</i></li>
-                <li><b>ข้อต่อไป:</b> กดปุ่ม <span style="background:#34495e; color:white; padding: 2px 5px; border-radius: 4px;">🔄 เริ่มใหม่ (Reset)</span> เพื่อตั้งโจทย์ข้อถัดไป</li>
+                <li><b>เตรียมข้อสอบ:</b> อาจารย์เลื่อนแถบตั้งค่า หรือเลือกภาวะผิดปกติไว้ล่วงหน้า</li>
+                <li><b>ซ่อนเฉลย:</b> กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> (ด้านบน) ระบบจะซ่อนคำเฉลยและแสดงฟอร์มตอบคำถามขึ้นมาแทน</li>
+                <li><b>ทดสอบ:</b> ให้นักศึกษาวิเคราะห์กราฟแล้วเลือกคำตอบที่คิดว่าถูกต้องในช่อง <i>"📝 โหมดทดสอบ"</i></li>
+                <li><b>ตรวจคำตอบ:</b> กดปุ่ม <i>"ส่งคำตอบ / ดูเฉลย"</i> เพื่อตรวจความถูกต้อง พร้อมแสดงหน้าต่างอธิบายกราฟและแนวทางแก้ไข</li>
+                <li><b>ข้อต่อไป:</b> กดปุ่ม <span style="background:#34495e; color:white; padding: 2px 5px; border-radius: 4px;">🔄 เริ่มใหม่ (Reset)</span> เพื่อเคลียร์หน้าจอและตั้งโจทย์ข้อถัดไป</li>
             </ol>
             
             <div style="text-align: center; margin-top: 20px;">
@@ -270,102 +270,61 @@
         let currentGuideTxt = '';
 
         // ระบบเสียง Alarm
-        let audioCtx;
-        let isAudioEnabled = false;
-        let isAlarming = false;
+        let audioCtx = null;
         let alarmInterval = null;
+        let isMuted = false;
+        let isAlarmActive = false;
 
-        function toggleAudio() {
-            const btn = document.getElementById('audioBtn');
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            isAudioEnabled = !isAudioEnabled;
-            
-            if (isAudioEnabled) {
-                btn.innerHTML = "🔊 ปิดเสียง Alarm";
-                btn.style.backgroundColor = "#27ae60"; // สีเขียว
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-            } else {
-                btn.innerHTML = "🔈 เปิดเสียง Alarm";
-                btn.style.backgroundColor = "#e74c3c"; // สีแดง
-            }
+        function initAudioContext() {
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
 
-        function playBeepSound() {
-            if (!isAudioEnabled || !audioCtx) return;
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // ความถี่เสียงแหลม
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // ระดับเสียง (ไม่ให้ดังจนตกใจ)
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.15); // ดัง 0.15 วินาที
-        }
+        // อนุญาตให้ระบบเสียงเริ่มทำงานเมื่อคลิกที่ใดๆ บนจอครั้งแรก
+        document.body.addEventListener('click', initAudioContext, { once: true });
 
-        // จัดการเปิด/ปิดไฟเตือนและเสียง
-        function controlAlarm(triggerStatus) {
-            const banner = document.getElementById('alarmBanner');
-            if (triggerStatus && !isAlarming) {
-                isAlarming = true;
-                banner.style.visibility = 'visible';
-                banner.classList.add('flashing-alarm');
-                alarmInterval = setInterval(playBeepSound, 1000); // ร้องเตือนทุก 1 วินาที
-            } else if (!triggerStatus && isAlarming) {
-                isAlarming = false;
-                banner.style.visibility = 'hidden';
-                banner.classList.remove('flashing-alarm');
-                clearInterval(alarmInterval);
+        function playBeep() {
+            if (isMuted || !isAlarmActive) return;
+            if (!audioCtx) initAudioContext();
+            if (audioCtx && audioCtx.state === 'running') {
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime); // ความถี่เสียงเตือน
+                gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // ความดัง
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); // เฟดเสียงออก
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
             }
         }
 
-        function handleDropdownChange(source) {
-            let mode = document.getElementById('modeSelect').value;
-            let flow = document.getElementById('flowSelect').value;
-            let abnormal = document.getElementById('abnormalSelect');
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('muteBtn');
+            btn.innerHTML = isMuted ? "🔇 ปิดเสียงแล้ว" : "🔊 ปิดเสียงเตือน";
+            btn.style.backgroundColor = isMuted ? "#e74c3c" : "#7f8c8d";
+        }
 
-            // เงื่อนไข 1: PCV + Sine -> เด้งไปที่ Mild Scooped out อัตโนมัติ
-            if (source === 'modeFlow') {
-                if (mode === 'pcv' && flow === 'sine') {
-                    abnormal.value = 'scoop_mild';
-                } else if (abnormal.value === 'scoop_mild') {
-                    abnormal.value = 'normal'; // เคลียร์กลับถ้าผู้ใช้เปลี่ยนโหมดอื่น
+        function updateAlarmSystem(abnormalState, ppeakValue) {
+            let shouldAlarm = (abnormalState !== 'normal') || (ppeakValue > 35);
+            let alarmLight = document.getElementById('topAlarmLight');
+            let muteBtn = document.getElementById('muteBtn');
+
+            if (shouldAlarm) {
+                if (!isAlarmActive) {
+                    isAlarmActive = true;
+                    alarmLight.style.display = 'flex';
+                    muteBtn.style.display = 'block';
+                    if (!alarmInterval) alarmInterval = setInterval(playBeep, 800); // ดังทุก 0.8 วิ
                 }
-            } 
-            // เงื่อนไข 2: หากเลือก Auto-PEEP -> บังคับ RR 16, Ti 2.0 ก่อน
-            else if (source === 'abnormal') {
-                if (abnormal.value === 'autopeep') {
-                    document.getElementById('rrSlider').value = 16;
-                    document.getElementById('rrVal').innerText = '16';
-                    document.getElementById('tiSlider').value = 2.0;
-                    document.getElementById('tiVal').innerText = '2.0';
-                }
-            }
-            
-            checkAutoAsynchrony(); 
-            switchPatientVideo();
-        }
-
-        function checkAutoAsynchrony() {
-            let rr = parseInt(document.getElementById('rrSlider').value);
-            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
-            let cycleTimeSec = 60 / rr;
-            let teTimeSec = cycleTimeSec - tiSetting;
-            
-            let dropdown = document.getElementById('abnormalSelect');
-            let currentState = dropdown.value;
-
-            // เงื่อนไข Auto-Detect โดยการคำนวณ Te
-            if (teTimeSec < 0.65) {
-                dropdown.value = 'autopeep'; 
-            } else if (rr <= 15 && tiSetting >= 2.0) {
-                dropdown.value = 'prolong';  
             } else {
-                if (currentState === 'autopeep' || currentState === 'prolong') {
-                    dropdown.value = 'normal';
+                if (isAlarmActive) {
+                    isAlarmActive = false;
+                    alarmLight.style.display = 'none';
+                    muteBtn.style.display = 'none';
+                    if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
                 }
             }
         }
@@ -419,6 +378,44 @@
             document.getElementById('answerModal').style.display = 'block';
         }
 
+        // จับเหตุการณ์การเปลี่ยน Mode/Flow ควบคุมช่อง Asynchrony อัตโนมัติ
+        function handleModeFlowChange() {
+            initAudioContext();
+            const mode = document.getElementById('modeSelect').value;
+            const flowType = document.getElementById('flowSelect').value;
+            const abnormalSelect = document.getElementById('abnormalSelect');
+            
+            if (mode === 'pcv' && flowType === 'sine' && abnormalSelect.value === 'normal') {
+                abnormalSelect.value = 'scoop_mild'; // เด้งอัตโนมัติ
+            } else if (abnormalSelect.value === 'scoop_mild' && !(mode === 'pcv' && flowType === 'sine')) {
+                abnormalSelect.value = 'normal'; // รีเซ็ตถ้าเปลี่ยนหนี
+            }
+            
+            checkAutoAsynchrony(); 
+            switchPatientVideo();
+        }
+
+        function checkAutoAsynchrony() {
+            let rr = parseInt(document.getElementById('rrSlider').value);
+            let tiSetting = parseFloat(document.getElementById('tiSlider').value);
+            let cycleTimeSec = 60 / rr;
+            let teTimeSec = cycleTimeSec - tiSetting;
+            
+            let dropdown = document.getElementById('abnormalSelect');
+            let currentState = dropdown.value;
+
+            // ตรวจจับแค่ตอนอยู่ในสถานะ normal หรือที่เกิดจาก auto-detect เท่านั้น จะได้ไม่ไปทับการบังคับเลือกของผู้ใช้
+            if (currentState === 'normal' || currentState === 'autopeep' || currentState === 'prolong') {
+                if (teTimeSec < 0.65) {
+                    dropdown.value = 'autopeep'; 
+                } else if (rr <= 15 && tiSetting >= 2.0) {
+                    dropdown.value = 'prolong';  
+                } else {
+                    dropdown.value = 'normal';
+                }
+            }
+        }
+
         function resetApp() {
             document.getElementById('modeSelect').value = 'pcv';
             document.getElementById('flowSelect').value = 'decel';
@@ -457,6 +454,7 @@
                 if (mode === 'pcv' && flowType === 'sine') videoKey = 'scoop_mild'; 
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist'; 
             }
+            
             let targetSrc = patientVideos[videoKey];
             if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
                 videoEl.src = targetSrc;
@@ -502,7 +500,7 @@
             
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
-            const abnormal = document.getElementById('abnormalSelect').value;
+            let abnormal = document.getElementById('abnormalSelect').value;
             
             let rr = parseInt(document.getElementById('rrSlider').value);
             const pi = parseInt(document.getElementById('piSlider').value);
@@ -573,9 +571,9 @@
                     else if (flowType === 'decel') f_y = 290 - (70 * flowRiseSlope) * Math.exp(-time/30); 
                     else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70 * flowRiseSlope; 
 
-                    // ปรับค่าความลึก (Amplitude) ของหลุมให้ดูเป็นธรรมชาติ (ไม่ลึกเกินจริง)
-                    if(abnormal === 'scoop_mild') p_y += Math.sin(time * 0.08) * 8;   // เดิม 18
-                    if(abnormal === 'scoop_severe') p_y += Math.sin(time * 0.08) * 20; // เดิม 45
+                    // ปรับรอยบุ๋มให้ธรรมชาติโดยใช้คลื่นโค้งตามสัดส่วนเวลาหายใจเข้า
+                    if(abnormal === 'scoop_mild') p_y += Math.sin((time / drawTiLength) * Math.PI) * 6;
+                    if(abnormal === 'scoop_severe') p_y += Math.sin((time / drawTiLength) * Math.PI) * 15; 
                     
                     if(abnormal === 'delay_cycle' && time > drawTiLength - 25) { p_y -= 25; f_y = 290 + 20; }
 
@@ -583,7 +581,8 @@
                     let expTime = time - drawTiLength;
                     p_y = 140 - amplitude * Math.exp(-expTime/15);
                     
-                    if(abnormal === 'autopeep') { f_y = 290 + 75 * Math.exp(-expTime/65); } 
+                    // ปรับ Auto-PEEP decay ช้าลงให้ชนรอบใหม่ก่อนที่จะถึงศูนย์ชัดเจน
+                    if(abnormal === 'autopeep') { f_y = 290 + 75 * Math.exp(-expTime/80); } 
                     else { f_y = 290 + 75 * Math.exp(-expTime/20); }
 
                     if(abnormal === 'auto_trigger') f_y -= 15;
@@ -632,10 +631,6 @@
                 ventScreen.style.background = '#34495e'; ventScreen.style.boxShadow = 'none';
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
-
-            // คำนวณความผิดปกติเพื่อเปิดไฟ Alarm
-            let isAbnormalStatus = (abnormal !== 'normal' || ppeak > 35 || isAutoDetected);
-            controlAlarm(isAbnormalStatus);
 
             if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine') { currentActualAbnormal = 'scoop_mild'; }
             else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel') { currentActualAbnormal = 'over_assist'; }
@@ -702,6 +697,21 @@
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
                 waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
             }
+            else if (abnormal === 'normal') {
+                if (mode === 'pcv' && flowType === 'sine') { 
+                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; col = "#e67e22"; 
+                    guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
+                    waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
+                }
+                else if (mode === 'psv' && flowType === 'decel') { 
+                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; col = "#e67e22"; 
+                    guideTxt = "อาจลดระดับ Pressure Support ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
+                    waveDesc = "กราฟ Flow ขาเข้ามีลักษณะลาดลง (Decelerating) ยาวนาน อาจเกิดจาก Pressure Support ที่สูงเกินไป";
+                }
+            }
+            
+            // อัปเดตระบบ Alarm 
+            updateAlarmSystem(currentActualAbnormal, ppeak);
 
             currentWaveDesc = waveDesc;
             currentGuideTxt = guideTxt;
