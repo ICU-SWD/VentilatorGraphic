@@ -166,7 +166,7 @@
 
             <!-- ซ่อนตอนสอบ -->
             <div id="abnormalControlGroup" class="control-group" style="align-items: flex-start; flex: 1 1 200px;">
-                <label>Asynchrony & Alarms (จำลอง)</label>
+                <label>Asynchrony & Alarms</label>
                 <select id="abnormalSelect" onchange="switchPatientVideo()">
                     <option value="normal">ปกติ (Normal)</option>
                     <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
@@ -175,19 +175,18 @@
                     <option value="premature_cycle">ตัดก่อน (Premature Cycling)</option>
                     <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
                     <option value="sawtooth">มีน้ำ/เสมหะในสาย (Sawtooth Pattern)</option>
-                    <option value="delay_cycle">ตัดช้า (Delayed Cycling)</option>
                     <option value="scoop_mild">Pressure Scooped out (Mild)</option>
-                    <option value="scoop_severe">Pressure Scooped out (Severe)</option>
                     <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
+                    <option value="over_assist">ช่วยเหลือมากเกินไป (Over-assist)</option>
                 </select>
             </div>
 
-            <!-- เพิ่มปุ่ม Intervention สำหรับแก้ปัญหา -->
-            <div class="control-group" style="flex: 1 1 200px; justify-content: center;">
+            <!-- ปุ่ม Intervention สำหรับแก้ปัญหา -->
+            <div class="control-group" style="flex: 1 1 180px; justify-content: center;">
                 <label>การพยาบาล (Interventions)</label>
                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                    <button class="top-btn" style="background:#3498db; width:100%;" onclick="doIntervention('suction')">💧 ดูดเสมหะ (Suction)</button>
-                    <button class="top-btn" style="background:#e67e22; width:100%;" onclick="doIntervention('fix_leak')">🔧 หาจุดรั่ว (Fix Leak)</button>
+                    <button class="top-btn" style="background:#3498db; width:100%; font-size:13px;" onclick="doIntervention('suction')">💧 ดูดเสมหะ (Suction)</button>
+                    <button class="top-btn" style="background:#e67e22; width:100%; font-size:13px;" onclick="doIntervention('fix_leak')">🔧 หาจุดรั่ว (Fix Leak)</button>
                 </div>
             </div>
 
@@ -207,7 +206,7 @@
                 <label>Pressure</label>
                 <div class="ppeak-badge" id="ppeakDisplay">Ppeak: 20</div>
                 <div class="digital-value" id="piVal">15</div>
-                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value; initAudioContext();">
+                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value; checkAutoAsynchrony(); switchPatientVideo(); initAudioContext();">
             </div>
 
             <div class="control-group">
@@ -270,25 +269,22 @@
             
             <h4 style="color: #27ae60; margin-bottom: 5px; margin-top: 15px;">▶️ โหมดจำลองสถานการณ์ (สำหรับอาจารย์ใช้สอน)</h4>
             <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
-                <li>ปรับตั้งค่า Slider ได้อย่างอิสระ หรือเลือกภาวะความผิดปกติจากช่อง Asynchrony</li>
-                <li>ระบบมีเซ็นเซอร์อัตโนมัติ: หากตั้งค่า Te สั้นไป จะแสดงกราฟ <b>Auto-PEEP</b> ทันที</li>
-                <li>ปุ่ม <b>"ดูดเสมหะ"</b> และ <b>"หาจุดรั่ว"</b> สามารถกดใช้งานได้สมจริง</li>
+                <li>ปรับตั้งค่า Slider ได้อย่างอิสระ ระบบมีเซ็นเซอร์อัตโนมัติคอยดักจับความผิดปกติ เช่น ตั้ง Te สั้นไป จะแสดง <b>Auto-PEEP</b> ทันที</li>
+                <li><b>สาธิตวิธีแก้ปัญหา:</b> อาจารย์สามารถปรับ Pressure ขึ้นเพื่อแก้โรค (เช่น Mild Scoop / Double Trigger) กราฟจะเด้งกลับเป็นโหมดปกติให้อัตโนมัติ (Demonstration Tool)</li>
+                <li>ปุ่ม <b>"ดูดเสมหะ"</b> และ <b>"หาจุดรั่ว"</b> สามารถกดเพื่อสาธิตการเคลียร์ปัญหาได้สมจริง</li>
             </ul>
 
             <h4 style="color: #2980b9; margin-bottom: 5px;">▶️ โหมดสอบทฤษฎี (วิเคราะห์กราฟ 10 ข้อ)</h4>
             <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
-                <li>ระบบจะสุ่มสลับโจทย์กราฟ 10 อาการ (ปุ่มตั้งค่าทั้งหมดจะถูกล็อกเพื่อป้องกันการแอบดู)</li>
-                <li>โจทย์ <b>Auto-PEEP</b> จะโชว์ด้วย RR=35 และ Ti=1.1 เสมอเพื่อให้เห็นความผิดปกติชัดเจน</li>
-                <li>ผู้สอบเลือกคำตอบจาก Dropdown แล้วกดยืนยัน ระบบจะเฉลยทันทีว่าวิเคราะห์ถูกหรือไม่</li>
+                <li>ระบบจะสุ่มสลับโจทย์ 10 อาการไม่ให้ซ้ำกัน (แถบตั้งค่าและเมนูจะถูกล็อกเพื่อกันการทุจริต)</li>
+                <li>ผู้สอบจะต้องดูรูปกราฟและเลือกโรคจาก Dropdown ให้ถูกต้อง (ข้อ Auto-PEEP ระบบจะปรับ RR=35 Ti=1.1 ให้อัตโนมัติ)</li>
             </ul>
 
-            <h4 style="color: #e67e22; margin-bottom: 5px;">▶️ โหมดสอบปฏิบัติ (แก้สถานการณ์จริง 10 ข้อ)</h4>
+            <h4 style="color: #e67e22; margin-bottom: 5px;">▶️ โหมดสอบปฏิบัติ (แก้สถานการณ์ 10 ข้อ)</h4>
             <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
-                <li>ระบบจะซ่อนช่องเฉลย และสุ่มปัญหามาให้ทีละข้อ</li>
-                <li>ผู้สอบต้อง <b>"ปรับแก้พารามิเตอร์"</b> ด้วยตัวเอง เช่น เพิ่ม Pressure, ลด Ti หรือ กดปุ่มพยาบาล (ดูดเสมหะ)</li>
-                <li>เมื่อผู้สอบปรับจน <b>กราฟกลับมาปกติ</b> แล้ว ให้กดส่งคำตอบ ระบบจะให้คะแนน</li>
+                <li>ระบบจะซ่อนชื่อโรคและสุ่มสถานการณ์ที่มีปัญหาขึ้นมา 10 สถานการณ์</li>
+                <li>ผู้สอบต้อง <b>"ปรับแก้พารามิเตอร์"</b> (ลด RR/Ti, เพิ่ม Pressure) หรือ <b>"กดปุ่มการพยาบาล"</b> จนกว่า <b>กราฟจะกลับมาปกติ</b> จึงจะกดยืนยันเพื่อรับคะแนน</li>
             </ul>
-            <p style="color: #c0392b; font-size: 13px; text-align: center; font-weight: bold; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">*เมื่อทำข้อสอบครบ 10 ข้อ ข้อมูลการตอบรายข้อและคะแนนรวมจะถูกบันทึกลงฐานข้อมูลทันที*</p>
         </div>
     </div>
 
@@ -296,13 +292,13 @@
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycby9YYAVfbZLip1-E2Ua_GiwJlmD9tpLhEeZfrT2sxGf4QDFA937oPF60C9vC9PncHDl/exec"; 
 
         const patientVideos = {
-            'normal': 'Rest.mp4', 'scoop_mild': 'Respi.mp4', 'scoop_severe': 'Airhunger.mp4',
+            'normal': 'Rest.mp4', 'scoop_mild': 'Respi.mp4',
             'autopeep': 'Respi.mp4', 'prolong': 'Respi.mp4', 'auto_trigger': 'Respi.mp4',
             'double_trigger': 'Respi.mp4', 'premature_cycle': 'Respi.mp4', 'trigger_fail': 'Rest.mp4',
-            'sawtooth': 'Respi.mp4', 'delay_cycle': 'Respi.mp4', 'over_assist': 'Rest.mp4'
+            'sawtooth': 'Respi.mp4', 'over_assist': 'Rest.mp4'
         };
 
-        // ฐานข้อมูลโจทย์
+        // ฐานข้อมูลโจทย์ (ตัด Delay cycle และ Severe scoop ออก)
         const theoryScenarios = [
             { id: 'normal', name: 'ปกติ (Normal / Synchronized)', solution: 'สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์' },
             { id: 'autopeep', name: 'ลมค้าง (Auto-PEEP)', solution: 'ยืดเวลาหายใจออก (Te) โดยลด RR หรือลด Ti' },
@@ -317,29 +313,29 @@
         ];
 
         const practicalScenarios = [
-            { id: 'autopeep', desc: 'Auto-PEEP', init: {rr: 35, ti: 1.1, pi: 15}, solution: 'ลด RR หรือลด Ti เพื่อให้ Te >= 0.65 วินาที' },
-            { id: 'double_trigger', desc: 'Double Triggering', init: {rr: 15, ti: 0.7, pi: 10}, solution: 'เพิ่ม Pressure (>= 20) หรือ เพิ่ม Ti (>= 1.2)' },
-            { id: 'premature_cycle', desc: 'Premature Cycling', init: {rr: 15, ti: 0.6, pi: 15}, solution: 'เพิ่มเวลา Ti (>= 1.0)' },
+            { id: 'autopeep', desc: 'Auto-PEEP', init: {rr: 35, ti: 1.1, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'ลด RR หรือลด Ti เพื่อให้ Te >= 0.65 วินาที' },
+            { id: 'double_trigger', desc: 'Double Triggering', init: {rr: 15, ti: 0.7, pi: 10, mode: 'pcv', flow: 'decel'}, solution: 'เพิ่ม Pressure (>= 20) หรือ เพิ่ม Ti (>= 1.2)' },
+            { id: 'premature_cycle', desc: 'Premature Cycling', init: {rr: 15, ti: 0.6, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'เพิ่มเวลา Ti (>= 1.0)' },
             { id: 'scoop_mild', desc: 'Pressure Scooped out (Mild)', init: {rr: 15, ti: 1.0, pi: 10, mode: 'pcv', flow: 'sine'}, solution: 'เพิ่ม Pressure (>= 20)' },
-            { id: 'sawtooth', desc: 'Sawtooth Pattern', init: {rr: 15, ti: 1.0, pi: 15}, solution: 'กดปุ่ม ดูดเสมหะ (Suction)' },
-            { id: 'auto_trigger', desc: 'Auto-Triggering', init: {rr: 15, ti: 1.0, pi: 15}, solution: 'กดปุ่ม หาจุดรั่ว (Fix Leak)' },
-            { id: 'prolong', desc: 'Prolonged Ti', init: {rr: 10, ti: 2.2, pi: 15}, solution: 'ลดเวลา Ti (< 2.0)' },
-            { id: 'autopeep', desc: 'Auto-PEEP (Case 2)', init: {rr: 30, ti: 1.5, pi: 15}, solution: 'ลด RR หรือลด Ti เพื่อให้ Te >= 0.65 วินาที' },
-            { id: 'double_trigger', desc: 'Double Triggering (Case 2)', init: {rr: 18, ti: 0.6, pi: 12}, solution: 'เพิ่ม Pressure (>= 20) หรือ เพิ่ม Ti (>= 1.2)' },
-            { id: 'premature_cycle', desc: 'Premature Cycling (Case 2)', init: {rr: 12, ti: 0.5, pi: 15}, solution: 'เพิ่มเวลา Ti (>= 1.0)' }
+            { id: 'sawtooth', desc: 'Sawtooth Pattern', init: {rr: 15, ti: 1.0, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'กดปุ่ม ดูดเสมหะ (Suction)' },
+            { id: 'auto_trigger', desc: 'Auto-Triggering', init: {rr: 15, ti: 1.0, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'กดปุ่ม หาจุดรั่ว (Fix Leak)' },
+            { id: 'prolong', desc: 'Prolonged Ti', init: {rr: 10, ti: 2.2, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'ลดเวลา Ti (< 2.0)' },
+            { id: 'over_assist', desc: 'Over-assist', init: {rr: 15, ti: 1.0, pi: 20, mode: 'psv', flow: 'decel'}, solution: 'ลด Pressure (<= 12)' },
+            { id: 'trigger_fail', desc: 'Trigger Failure', init: {rr: 15, ti: 1.0, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'ปรับ Trigger sensitivity หรือดูแลภาวะ Auto-PEEP' },
+            { id: 'normal', desc: 'สถานการณ์ปกติ', init: {rr: 15, ti: 1.0, pi: 15, mode: 'pcv', flow: 'decel'}, solution: 'กราฟปกติ ไม่ต้องแก้ไขเพิ่มเติม' }
         ];
 
         let currentExamType = 'none'; 
         let currentQIndex = 0;
         let examScore = 0;
         let examQuestions = [];
-        let examDetailsLog = []; // เก็บสถิติรายข้อ
+        let examDetailsLog = []; 
         let studentData = {};
         
         let currentActualAbnormal = 'normal';
         let currentWaveDesc = '';
         let currentGuideTxt = '';
-        let actionTaken = ''; // เก็บ Action พยาบาล ('suction', 'fix_leak')
+        let actionTaken = ''; 
 
         let audioCtx = null;
         let alarmInterval = null;
@@ -407,7 +403,6 @@
                 if (type === 'fix_leak' && drop.value === 'auto_trigger') drop.value = 'normal';
                 switchPatientVideo();
             }
-            // ถ้าสอบปฏิบัติ ระบบ DrawWaveform จะจับ actionTaken ไปคำนวณแก้กราฟให้เอง
         }
 
         // ================= ระบบจัดการข้อสอบ =================
@@ -471,7 +466,7 @@
         }
 
         function loadQuestionUI() {
-            actionTaken = ''; // รีเซ็ตการกดปุ่ม Intervention เสมอเมื่อขึ้นข้อใหม่
+            actionTaken = ''; 
             document.getElementById('examCounter').innerText = "ข้อที่ " + (currentQIndex + 1) + " / 10";
             document.getElementById('studentAnswer').value = 'normal';
 
@@ -504,6 +499,7 @@
             let pi = parseInt(document.getElementById('piSlider').value);
             let te = (60/rr) - ti;
             
+            if (q.id === 'normal') return true;
             if (q.id === 'autopeep' && te >= 0.65) return true;
             if (q.id === 'prolong' && ti < 2.0) return true;
             if (q.id === 'double_trigger' && (pi >= 20 || ti >= 1.2)) return true;
@@ -511,6 +507,9 @@
             if (q.id === 'scoop_mild' && pi >= 20) return true;
             if (q.id === 'sawtooth' && actionTaken === 'suction') return true;
             if (q.id === 'auto_trigger' && actionTaken === 'fix_leak') return true;
+            if (q.id === 'over_assist' && pi <= 12) return true;
+            // Trigger failure สาธิตให้ตอบไม่ถูกไปก่อนถ้าแก้ไขไม่ได้ (รอพัฒนาเชิงลึก) แต่อย่างน้อยครูสามารถอธิบายได้
+            if (q.id === 'trigger_fail' && actionTaken === 'fix_leak') return true; // จำลองแก้ชั่วคราว
             return false;
         }
 
@@ -536,7 +535,6 @@
                     feedbackHTML = "คำตอบที่ถูกต้องคือ: <br><span style='color:#c0392b; font-size:18px;'>" + correctText + "</span>";
                 }
             } else {
-                // โหมดปฏิบัติเช็คจากค่าที่เซ็ต
                 isCorrect = checkPracticalFixed(q);
                 studentActionLog = isCorrect ? "✅ แก้ไขสำเร็จ" : "❌ แก้ไขไม่สำเร็จ";
                 
@@ -547,7 +545,6 @@
                 }
             }
 
-            // บันทึก Log
             examDetailsLog.push(`ข้อ ${currentQIndex+1}: [โจทย์: ${actualName}] -> [ผล: ${studentActionLog}]`);
             if (isCorrect) examScore++;
 
@@ -603,7 +600,6 @@
             nextBtn.style.backgroundColor = "#7f8c8d";
             document.getElementById('answerModal').style.display = 'block';
 
-            // ส่งข้อมูลสรุปรายข้อไปเก็บในรูปแบบ String ย่อหน้า
             let detailsString = examDetailsLog.join('\n');
             let examTypeName = (currentExamType === 'theory') ? 'สอบทฤษฎี' : 'สอบปฏิบัติ';
             
@@ -630,23 +626,17 @@
 
         function handleModeFlowChange() {
             initAudioContext();
-            const mode = document.getElementById('modeSelect').value;
-            const flowType = document.getElementById('flowSelect').value;
-            const abnormalSelect = document.getElementById('abnormalSelect');
-            
-            if (mode === 'pcv' && flowType === 'sine' && abnormalSelect.value === 'normal') {
-                abnormalSelect.value = 'scoop_mild'; 
-            } else if (abnormalSelect.value === 'scoop_mild' && !(mode === 'pcv' && flowType === 'sine')) {
-                abnormalSelect.value = 'normal'; 
-            }
             checkAutoAsynchrony(); 
             switchPatientVideo();
         }
 
         function checkAutoAsynchrony() {
-            if (currentExamType !== 'none') return; // ปิด Auto-detect ขณะสอบ
+            if (currentExamType !== 'none') return; // ปิด Auto-detect ขณะสอบเพื่อไม่ให้กวนโจทย์
 
+            let mode = document.getElementById('modeSelect').value;
+            let flowType = document.getElementById('flowSelect').value;
             let rr = parseInt(document.getElementById('rrSlider').value);
+            let pi = parseInt(document.getElementById('piSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
             let cycleTimeSec = 60 / rr;
             let teTimeSec = cycleTimeSec - tiSetting;
@@ -654,10 +644,21 @@
             let dropdown = document.getElementById('abnormalSelect');
             let currentState = dropdown.value;
 
-            if (currentState === 'normal' || currentState === 'autopeep' || currentState === 'prolong') {
-                if (teTimeSec < 0.65) { dropdown.value = 'autopeep'; } 
-                else if (rr <= 15 && tiSetting >= 2.0) { dropdown.value = 'prolong'; } 
-                else { dropdown.value = 'normal'; }
+            // การประเมินเพื่อสร้าง Asynchrony อัตโนมัติ (เมื่ออยู่ในโหมดปกติ)
+            if (currentState === 'normal') {
+                if (teTimeSec < 0.65) dropdown.value = 'autopeep';
+                else if (rr <= 15 && tiSetting >= 2.0) dropdown.value = 'prolong';
+                else if (mode === 'pcv' && flowType === 'sine' && pi < 20) dropdown.value = 'scoop_mild';
+                else if (mode === 'psv' && flowType === 'decel' && pi > 12) dropdown.value = 'over_assist';
+            } 
+            // การประเมินเพื่อ "แก้ปัญหา" ให้กลับมาเป็นปกติ (ให้อาจารย์สาธิต)
+            else {
+                if (currentState === 'autopeep' && teTimeSec >= 0.65) dropdown.value = 'normal';
+                else if (currentState === 'prolong' && tiSetting < 2.0) dropdown.value = 'normal';
+                else if (currentState === 'scoop_mild' && pi >= 20) dropdown.value = 'normal';
+                else if (currentState === 'over_assist' && pi <= 12) dropdown.value = 'normal';
+                else if (currentState === 'double_trigger' && (pi >= 20 || tiSetting >= 1.2)) dropdown.value = 'normal';
+                else if (currentState === 'premature_cycle' && tiSetting >= 1.0) dropdown.value = 'normal';
             }
         }
 
@@ -689,6 +690,9 @@
 
         function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
         function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('guideModal')) { closeGuide(); }
+        }
         
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
@@ -762,7 +766,6 @@
             let isAutoDetected = false;
             let isPracticalFixed = false;
             
-            // กราฟแปรผันตามโหมด
             if (currentExamType === 'practical') {
                 let q = examQuestions[currentQIndex];
                 isPracticalFixed = checkPracticalFixed(q);
@@ -773,6 +776,8 @@
                 if (abnormal === 'normal') {
                     if (teTimeSec < 0.65) { abnormal = 'autopeep'; isAutoDetected = true; }
                     if (rr <= 15 && tiSetting >= 2.0) { abnormal = 'prolong'; isAutoDetected = true; }
+                    if (mode === 'pcv' && flowType === 'sine' && pi < 20) { abnormal = 'scoop_mild'; isAutoDetected = true; }
+                    if (mode === 'psv' && flowType === 'decel' && pi > 12) { abnormal = 'over_assist'; isAutoDetected = true; }
                 }
             }
 
@@ -821,7 +826,6 @@
                     else if (flowType === 'sine') f_y = 290 - Math.sin((time / drawTiLength) * Math.PI) * 70 * flowRiseSlope; 
 
                     if(abnormal === 'scoop_mild') p_y += Math.sin((time / drawTiLength) * Math.PI) * 6;
-                    if(abnormal === 'scoop_severe') p_y += Math.sin((time / drawTiLength) * Math.PI) * 15; 
                     if(abnormal === 'delay_cycle' && time > drawTiLength - 25) { p_y -= 25; f_y = 290 + 20; }
 
                 } else if (!isDoubleTriggerBreath) {
@@ -878,17 +882,17 @@
                 phaseBadge.innerText = 'หายใจออก (Exhalation)'; phaseBadge.style.background = '#e74c3c'; phaseBadge.style.color = 'white';
             }
 
-            if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine') { currentActualAbnormal = 'scoop_mild'; }
-            else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel') { currentActualAbnormal = 'over_assist'; }
+            if (abnormal === 'normal' && mode === 'pcv' && flowType === 'sine' && pi < 20) { currentActualAbnormal = 'scoop_mild'; }
+            else if (abnormal === 'normal' && mode === 'psv' && flowType === 'decel' && pi > 12) { currentActualAbnormal = 'over_assist'; }
             else { currentActualAbnormal = abnormal; }
 
             let txt = "ปกติ (Synchronized)"; let col = "#27ae60";
             let guideTxt = "สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์";
-            let waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) และ Flow เป็น decelerate ผู้ป่วยไม่ออกแรงเอง สอดคล้องกับการตั้งค่าเพื่อให้ผู้ป่วยได้พัก";
+            let waveDesc = "กราฟ Pressure เป็นสี่เหลี่ยม และ Flow เป็น decelerate สอดคล้องกับการตั้งค่าเพื่อให้ผู้ป่วยได้พัก";
             
             if (ppeak > 35) { 
                 txt = "🚨 เตือน: ระวัง Barotrauma (Ppeak > 35 cmH2O)"; col = "#c0392b"; 
-                guideTxt = "ลด Pressure/Volume, ลด PEEP, ตรวจสอบภาวะลมรั่วในช่องอก (Pneumothorax) หรือทางเดินหายใจอุดกั้น";
+                guideTxt = "ลด Pressure/Volume, ลด PEEP, ตรวจสอบภาวะลมรั่วในช่องอก หรือทางเดินหายใจอุดกั้น";
                 waveDesc = "กราฟ Pressure พุ่งสูงเกินกว่า 35 cmH2O ซึ่งเสี่ยงต่อการเกิดถุงลมโป่งพองแตก";
             }
             else if (abnormal === 'autopeep') { 
@@ -899,7 +903,7 @@
             }
             else if (abnormal === 'auto_trigger') { 
                 txt = "🚨 เตือน: Auto-Triggering (ลมรั่ว/กระตุ้นเอง)"; col = "#c0392b"; 
-                guideTxt = "ค้นหาจุดที่ลมรั่วในระบบ (Circuit leak) หรือปรับ Trigger sensitivity ให้แข็งขึ้น (ลดความไว)";
+                guideTxt = "ค้นหาจุดที่ลมรั่วในระบบ (Circuit leak) หรือปรับ Trigger sensitivity ให้แข็งขึ้น";
                 waveDesc = "กราฟ Flow ไม่กลับไปแตะ 0 และเกิดรอบการหายใจถี่กว่าตั้งค่าโดยไม่มีรอยเว้าของ Pressure จากแรงดูดผู้ป่วย";
             }
             else if (abnormal === 'double_trigger') { 
@@ -922,20 +926,11 @@
                 guideTxt = "ทำการดูดเสมหะ (Suction) ให้ผู้ป่วย หรือเทน้ำที่ขังอยู่ในสายเครื่องช่วยหายใจออก (Drain water)";
                 waveDesc = "กราฟ Pressure และ Flow มีลักษณะหยักและสั่นสะเทือนคล้ายฟันเลื่อย (Sawtooth) ตลอดแนว";
             }
-            else if (abnormal === 'delay_cycle') { 
-                txt = "⚠️ เตือน: Delayed Cycling (เครื่องตัดช้าไป)"; col = "#8e44ad"; 
-                guideTxt = "ลดเวลาหายใจเข้า (Ti) ลง หรือปรับ Flow cycle-off (ETS) ให้เปอร์เซ็นต์สูงขึ้นเพื่อให้ตัดเร็วขึ้น";
-                waveDesc = "พบรอยแหลม (Spike) พุ่งขึ้นที่กราฟ Pressure ช่วงท้ายการหายใจเข้า และ Flow แหว่งเป็นบวก";
-            }
             else if (abnormal === 'scoop_mild') { 
-                txt = "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; col = "#e67e22"; 
-                guideTxt = "เพิ่ม Flow หรือปรับ Rise Time (Slope) ให้เร็วขึ้น, พิจารณาเพิ่ม Pressure Support";
-                waveDesc = "กราฟ Pressure ขาเข้ามีลักษณะเว้าแหว่ง (Scooped out) โค้งลงเล็กน้อย แสดงถึงการออกแรงสูดช่วยของผู้ป่วย";
-            }
-            else if (abnormal === 'scoop_severe') { 
-                txt = "🚨 เตือน: Pressure Scooped out (Severe Flow starvation)"; col = "#c0392b"; 
-                guideTxt = "เร่งการจ่าย Flow/Pressure ทันที, เปลี่ยนโหมดให้ตอบสนองผู้ป่วยดีขึ้น และหาสาเหตุของการหอบ";
-                waveDesc = "กราฟ Pressure ขาเข้าเว้าลึกลงอย่างชัดเจนจนเสียรูปทรง เครื่องจ่าย Flow ให้ไม่ทันความต้องการ";
+                txt = isAutoDetected ? "⚠️ เตือน: Pressure Scooped out (ผู้ป่วยออกแรงต้าน)" : "⚠️ เตือน: Pressure Scooped out (Mild Flow starvation)"; 
+                col = "#e67e22"; 
+                guideTxt = "เพิ่ม Pressure หรือปรับ Rise Time (Slope) ให้เร็วขึ้นเพื่อให้พอต่อความต้องการ";
+                waveDesc = "กราฟ Pressure ขาเข้ามีลักษณะเว้าแหว่งโค้งลงเล็กน้อย แสดงถึงการออกแรงสูดช่วยของผู้ป่วยที่ไม่สัมพันธ์กับเครื่อง";
             }
             else if (abnormal === 'prolong') { 
                 txt = isAutoDetected ? "⚠️ เตือน: Active Exhalation (ตรวจพบอัตโนมัติจากการตั้งค่า Ti นานไป)" : "⚠️ เตือน: Active Exhalation (ฝืนหายใจออก)"; 
@@ -943,17 +938,11 @@
                 guideTxt = "ลดเวลาหายใจเข้า (Ti) ให้สอดคล้องและสัมพันธ์กับระยะเวลาการหายใจของผู้ป่วยมากขึ้น";
                 waveDesc = "ผู้ป่วยพยายามฝืนเบ่งหายใจออกขณะเครื่องยังจ่ายลมเข้า ทำให้กราฟ Pressure พุ่งสูงขึ้นในช่วงท้าย Ti";
             }
-            else if (abnormal === 'normal') {
-                if (mode === 'pcv' && flowType === 'sine') { 
-                    txt = "⚠️ ข้อสังเกต: ผู้ป่วยอาจมีอาการ Pressure Scooped out (Flow starvation)"; col = "#e67e22"; 
-                    guideTxt = "ผู้ป่วยอาจออกแรงช่วยหายใจเอง ควรประเมินการตั้งค่า Pressure/Flow ว่าเพียงพอต่อผู้ป่วยหรือไม่";
-                    waveDesc = "กราฟ Pressure เป็น square wave (สี่เหลี่ยม) แต่กราฟ Flow เป็นรูป Sine wave บ่งชี้ว่าผู้ป่วยดึง Flow เองจากกล้ามเนื้อช่วยหายใจ";
-                }
-                else if (mode === 'psv' && flowType === 'decel') { 
-                    txt = "⚠️ ข้อสังเกต: การช่วยเหลืออาจมากเกินไป (Over-assist)"; col = "#e67e22"; 
-                    guideTxt = "อาจลดระดับ Pressure Support ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
-                    waveDesc = "กราฟ Flow ขาเข้ามีลักษณะลาดลง (Decelerating) ยาวนาน อาจเกิดจาก Pressure Support ที่สูงเกินไป";
-                }
+            else if (abnormal === 'over_assist') {
+                txt = isAutoDetected ? "⚠️ เตือน: Over-assist (ช่วยเหลือมากเกินไปจากการตั้ง Pressure สูง)" : "⚠️ เตือน: ช่วยเหลือมากเกินไป (Over-assist)"; 
+                col = "#e67e22"; 
+                guideTxt = "ลดระดับ Pressure ลง หรือปรับ Flow cycle-off (ETS) ให้เหมาะสมเพื่อป้องกันการช่วยเกิน";
+                waveDesc = "กราฟ Flow ขาเข้ามีลักษณะลาดลงยาวนาน อาจเกิดจาก Pressure Support ที่สูงเกินไป";
             }
             
             updateAlarmSystem(currentActualAbnormal, ppeak);
