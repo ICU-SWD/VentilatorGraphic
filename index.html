@@ -55,6 +55,7 @@
         select:focus, input[type="text"]:focus, input[type="number"]:focus { border-color: #3498db; }
         
         input[type="range"] { width: 100%; cursor: pointer; }
+        input[type="range"]:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .btn-capture { background-color: #2980b9; color: white; cursor: pointer; border: none; font-weight: bold; padding: 12px 30px; font-size: 16px; border-radius: 8px; margin-top: 20px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-capture:hover { background-color: #1c5981; }
@@ -73,9 +74,9 @@
                 <div class="subtitle">Advanced Clinical & Asynchrony Module | พัฒนาโดย นายปฏิยุทธ์ อุปพงษ์</div>
                 
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
-                    <button class="top-btn btn-guide" onclick="openGuide()">📖 ขั้นตอนการใช้งาน</button>
-                    <button id="examModeBtn" class="top-btn btn-exam" onclick="toggleExamMode()">🎓 เปิด Exam Mode</button>
-                    <button class="top-btn btn-reset" onclick="resetApp()">🔄 เริ่มใหม่ (Reset)</button>
+                    <button class="top-btn btn-guide" onclick="openGuide()">📖 คู่มือการใช้งาน</button>
+                    <button id="examModeBtn" class="top-btn btn-exam" onclick="openExamSetup()">🎓 เข้าสู่โหมดทดสอบ</button>
+                    <button class="top-btn btn-reset" onclick="resetApp()">🔄 กลับสู่หน้าหลัก (Reset)</button>
                 </div>
             </div>
         </div>
@@ -98,37 +99,37 @@
                     <div id="guidelineSection" class="guideline-section">
                         <p style="color:#e67e22; font-size: 12px; margin-bottom: 4px; font-weight: bold;">📊 ลักษณะกราฟ (Waveform)</p>
                         <p id="waveformDescText" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;">Pressure และ Flow สอดคล้องกับการตั้งค่า</p>
-
                         <p style="color:#3498db; font-size: 12px; margin-bottom: 4px; font-weight: bold;">💡 แนวทางการแก้ไข</p>
                         <p id="guidelineText" style="font-size: 13px; color: #2c3e50; line-height: 1.4;">สังเกตอาการทั่วไปและติดตามค่าพารามิเตอร์</p>
                     </div>
 
-                    <!-- ส่วนฟอร์มตอบคำถาม และ เก็บข้อมูลนักศึกษาที่อัปเดตแล้ว -->
-                    <div id="examSection" class="guideline-section" style="display: none; background: #fdfefe; padding: 10px; border-radius: 6px; border: 1px solid #dcdde1;">
-                        <p style="color:#8e44ad; font-size: 13px; font-weight: bold; margin-bottom: 8px;">📝 ข้อมูลผู้สอบ</p>
-                        <input type="text" id="studentName" placeholder="ชื่อ-นามสกุล" style="margin-bottom: 8px;">
-                        <input type="text" id="department" placeholder="หน่วยงาน (เช่น ICU, ER)" style="margin-bottom: 8px;">
-                        <input type="text" id="hospital" placeholder="โรงพยาบาล" style="margin-bottom: 8px;">
-                        <input type="number" id="experience" placeholder="อายุงาน (ปี)" style="margin-bottom: 15px;">
+                    <!-- แผงทำข้อสอบ -->
+                    <div id="examRunningSection" class="guideline-section" style="display: none; background: #fdfefe; padding: 10px; border-radius: 6px; border: 1px solid #dcdde1;">
+                        <p id="examCounter" style="color:#8e44ad; font-size: 14px; font-weight: bold; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 5px;">ข้อที่ 1 / 10</p>
                         
-                        <button class="top-btn" style="background:#f39c12; width: 100%; margin-bottom: 12px;" onclick="generateRandomExam()">🎲 สุ่มโจทย์ใหม่ (Randomize)</button>
+                        <!-- สำหรับสอบทฤษฎี -->
+                        <div id="theoryExamUI" style="display: none;">
+                            <p style="color:#2c3e50; font-size: 13px; font-weight: bold; margin-bottom: 5px;">เลือกภาวะที่พบจากกราฟ:</p>
+                            <select id="studentAnswer" style="margin-bottom: 10px;">
+                                <option value="normal">ปกติ (Normal / Synchronized)</option>
+                                <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
+                                <option value="auto_trigger">เครื่องตีเอง (Auto-Triggering)</option>
+                                <option value="double_trigger">กระตุ้นซ้อน (Double Triggering)</option>
+                                <option value="premature_cycle">ตัดก่อน (Premature Cycling)</option>
+                                <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
+                                <option value="sawtooth">มีน้ำ/เสมหะในสาย (Sawtooth Pattern)</option>
+                                <option value="scoop_mild">Pressure Scooped out (Mild)</option>
+                                <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
+                                <option value="over_assist">ช่วยเหลือมากเกินไป (Over-assist)</option>
+                            </select>
+                        </div>
 
-                        <p style="color:#2c3e50; font-size: 13px; font-weight: bold; margin-bottom: 5px;">เลือกภาวะที่พบจากกราฟ:</p>
-                        <select id="studentAnswer" style="margin-bottom: 10px;">
-                            <option value="normal">ปกติ (Normal / Synchronized)</option>
-                            <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
-                            <option value="auto_trigger">เครื่องตีเอง (Auto-Triggering)</option>
-                            <option value="double_trigger">กระตุ้นซ้อน (Double Triggering)</option>
-                            <option value="premature_cycle">ตัดก่อน (Premature Cycling)</option>
-                            <option value="trigger_fail">ไม่ตอบสนองแรงดูด (Trigger Failure)</option>
-                            <option value="sawtooth">มีน้ำ/เสมหะในสาย (Sawtooth Pattern)</option>
-                            <option value="delay_cycle">ตัดช้า (Delayed Cycling)</option>
-                            <option value="scoop_mild">Pressure Scooped out (Mild)</option>
-                            <option value="scoop_severe">Pressure Scooped out (Severe)</option>
-                            <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
-                            <option value="over_assist">ช่วยเหลือมากเกินไป (Over-assist)</option>
-                        </select>
-                        <button id="submitExamBtn" class="top-btn btn-exam" style="width: 100%; padding: 8px;" onclick="submitExam()">ส่งคำตอบ & บันทึกคะแนน</button>
+                        <!-- สำหรับสอบปฏิบัติ -->
+                        <div id="practicalExamUI" style="display: none;">
+                            <p style="color:#e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; text-align: center;">⚠️ พบความผิดปกติ! โปรดปรับตั้งค่าพารามิเตอร์ใหม่เพื่อแก้ไขปัญหาให้กราฟกลับมาปกติ</p>
+                        </div>
+
+                        <button id="submitExamBtn" class="top-btn btn-exam" style="width: 100%; padding: 8px;" onclick="checkAnswer()">ส่งคำตอบ</button>
                     </div>
                 </div>
             </div>
@@ -210,39 +211,70 @@
             </div>
         </div>
 
-        <button class="btn-capture" onclick="saveGraph()">📸 บันทึกภาพกราฟ (PNG)</button>
+        <button id="captureBtn" class="btn-capture" onclick="saveGraph()">📸 บันทึกภาพกราฟ (PNG)</button>
         <div id="saveStatus" class="status-msg"></div>
+    </div>
+
+    <!-- Popup เข้าสู่โหมดสอบ (กรอกข้อมูล) -->
+    <div id="examSetupModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="close-btn" onclick="document.getElementById('examSetupModal').style.display='none'">&times;</span>
+            <h3 style="color: #8e44ad; margin-top: 0; border-bottom: 2px solid #8e44ad; padding-bottom: 10px;">🎓 เข้าสู่โหมดทดสอบ (Exam Mode)</h3>
+            <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">กรุณากรอกข้อมูลเพื่อบันทึกคะแนน</p>
+            
+            <input type="text" id="studentName" placeholder="ชื่อ-นามสกุล" style="margin-bottom: 10px;">
+            <input type="text" id="department" placeholder="หน่วยงาน (เช่น ICU, ER)" style="margin-bottom: 10px;">
+            <input type="text" id="hospital" placeholder="โรงพยาบาล" style="margin-bottom: 10px;">
+            <input type="number" id="experience" placeholder="อายุงาน (ปี)" style="margin-bottom: 20px;">
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="top-btn" style="background:#2980b9; flex: 1;" onclick="startExam('theory')">📝 สอบทฤษฎี (10 ข้อ)</button>
+                <button class="top-btn" style="background:#e67e22; flex: 1;" onclick="startExam('practical')">🛠️ สอบปฏิบัติ (10 ข้อ)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup เฉลย/ผลสอบ -->
+    <div id="answerModal" class="modal">
+        <div class="modal-content" style="text-align: center; max-width: 500px;">
+            <h2 id="answerTitle" style="margin-top: 0;"></h2>
+            <p id="answerFeedback" style="font-size: 16px; font-weight: bold;"></p>
+            
+            <div id="answerDetailsBox" style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; border: 1px solid #dcdde1;">
+                <p style="color:#e67e22; font-size: 13px; font-weight: bold; margin-bottom: 5px;">📊 ลักษณะกราฟ (Waveform)</p>
+                <p id="answerWaveDesc" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;"></p>
+                <p style="color:#3498db; font-size: 13px; font-weight: bold; margin-bottom: 5px;">💡 แนวทางการแก้ไข</p>
+                <p id="answerGuide" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 0;"></p>
+            </div>
+            <button id="nextQuestionBtn" class="top-btn btn-exam" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 10px;" onclick="loadNextQuestion()">ข้อถัดไป ➡️</button>
+        </div>
     </div>
 
     <!-- Popup คู่มือ -->
     <div id="guideModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeGuide()">&times;</span>
-            <h3 style="color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f39c12; padding-bottom: 10px;">📖 ขั้นตอนการใช้งาน (For Instructors)</h3>
-            <h4 style="color: #8e44ad; margin-bottom: 5px; margin-top: 15px;">▶️ โหมดทดสอบนักศึกษา (Exam Mode) & เก็บ Data</h4>
-            <ol style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px;">
-                <li>กดปุ่ม <span style="background:#8e44ad; color:white; padding: 2px 5px; border-radius: 4px;">🎓 เปิด Exam Mode</span> ระบบจะทำการ <b>"ซ่อนเฉลย"</b> และ <b>"ล็อกปุ่มบังคับความผิดปกติ"</b> เพื่อป้องกันนักศึกษาแอบดูคำตอบ</li>
-                <li>ให้นักศึกษากรอกชื่อ หน่วยงาน โรงพยาบาล และอายุงาน</li>
-                <li>กดปุ่ม <b>"🎲 สุ่มโจทย์ใหม่"</b> ระบบจะสุ่มกราฟ Asynchrony พร้อมทั้งสุ่มค่าปรับตั้งให้อัตโนมัติ</li>
-                <li>เมื่อนักศึกษาเลือกคำตอบและกดส่ง ข้อมูลจะถูกบันทึกลง <b>Google Sheets</b> ทันที รวมถึงบันทึก 1 คะแนนหากตอบถูก เพื่อนำไปใช้วิเคราะห์ Big Data ต่อไป!</li>
-            </ol>
-        </div>
-    </div>
-
-    <!-- Popup เฉลยคำตอบ -->
-    <div id="answerModal" class="modal">
-        <div class="modal-content" style="text-align: center; max-width: 500px;">
-            <span class="close-btn" onclick="document.getElementById('answerModal').style.display='none'">&times;</span>
-            <h2 id="answerTitle" style="margin-top: 0;"></h2>
-            <p id="answerFeedback" style="font-size: 16px; font-weight: bold;"></p>
+            <h3 style="color: #2c3e50; margin-top: 0; border-bottom: 2px solid #f39c12; padding-bottom: 10px;">📖 คู่มือการใช้งานโปรแกรม</h3>
             
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; border: 1px solid #dcdde1;">
-                <p style="color:#e67e22; font-size: 13px; font-weight: bold; margin-bottom: 5px;">📊 ลักษณะกราฟ (Waveform)</p>
-                <p id="answerWaveDesc" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 12px;"></p>
-                <p style="color:#3498db; font-size: 13px; font-weight: bold; margin-bottom: 5px;">💡 แนวทางการแก้ไข</p>
-                <p id="answerGuide" style="font-size: 13px; color: #2c3e50; line-height: 1.4; margin-bottom: 0;"></p>
-            </div>
-            <button class="top-btn btn-reset" style="margin-top: 20px; width: 100%;" onclick="document.getElementById('answerModal').style.display='none'">ปิดหน้าต่าง</button>
+            <h4 style="color: #27ae60; margin-bottom: 5px; margin-top: 15px;">▶️ โหมดจำลองสถานการณ์ (สำหรับอาจารย์ใช้สอน)</h4>
+            <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
+                <li>ปรับตั้งค่า Slider ได้อย่างอิสระ หรือเลือกภาวะความผิดปกติจากช่อง Asynchrony</li>
+                <li>ระบบมีเซ็นเซอร์อัตโนมัติ: หากตั้งค่า Te สั้นไป จะฟ้อง <b>Auto-PEEP</b> ทันที</li>
+            </ul>
+
+            <h4 style="color: #2980b9; margin-bottom: 5px;">▶️ โหมดสอบทฤษฎี (วิเคราะห์กราฟ 10 ข้อ)</h4>
+            <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
+                <li>ระบบจะสุ่มโจทย์กราฟ 10 ข้อ (ปุ่มตั้งค่าทั้งหมดจะถูกล็อกเพื่อป้องกันการแอบดู)</li>
+                <li>หากเป็นโจทย์ Auto-PEEP ระบบจะตั้งค่า <b>RR=35, Ti=1.1</b> ให้เห็นชัดเจน</li>
+                <li>ผู้สอบวิเคราะห์กราฟและเลือกคำตอบที่ถูกต้องจากตัวเลือก</li>
+            </ul>
+
+            <h4 style="color: #e67e22; margin-bottom: 5px;">▶️ โหมดสอบปฏิบัติ (แก้สถานการณ์ 10 ข้อ)</h4>
+            <ul style="color: #34495e; font-size: 14px; line-height: 1.6; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">
+                <li>ระบบจะล็อกช่องคำเฉลยทิ้ง และสุ่มปัญหามาให้ (เช่น Auto-PEEP, Prolonged Ti)</li>
+                <li>ผู้สอบต้อง <b>"ปรับแก้พารามิเตอร์"</b> ด้วยตัวเอง (เช่น ลด RR/Ti, เปลี่ยนรูปแบบ Flow) จนกว่ากราฟจะกลับมาปกติ และกดส่งคำตอบ</li>
+            </ul>
+            <p style="color: #c0392b; font-size: 13px; text-align: center; font-weight: bold;">*เมื่อทำข้อสอบครบ 10 ข้อ ข้อมูลและคะแนนจะถูกบันทึกลงฐานข้อมูลทันที*</p>
         </div>
     </div>
 
@@ -256,7 +288,13 @@
             'sawtooth': 'Respi.mp4', 'delay_cycle': 'Respi.mp4', 'over_assist': 'Rest.mp4'
         };
 
-        let isExamMode = false; 
+        // ตัวแปรระบบ Exam
+        let currentExamType = 'none'; // 'none', 'theory', 'practical'
+        let currentQIndex = 0;
+        let examScore = 0;
+        let examQuestions = [];
+        let studentData = {};
+        
         let currentActualAbnormal = 'normal';
         let currentWaveDesc = '';
         let currentGuideTxt = '';
@@ -316,123 +354,221 @@
             }
         }
 
-        // ระบบ Exam Mode สลับหน้าจอซ่อนคำเฉลย
-        function toggleExamMode() {
-            isExamMode = !isExamMode;
-            const examBtn = document.getElementById('examModeBtn');
-            const guidelineSection = document.getElementById('guidelineSection');
-            const examSection = document.getElementById('examSection');
-            const abnormalControlGroup = document.getElementById('abnormalControlGroup'); // ล็อกช่องบังคับโรค
-            
-            if (isExamMode) {
-                examBtn.innerHTML = "🔓 ปิด Exam Mode";
-                examBtn.style.backgroundColor = "#e74c3c"; 
-                guidelineSection.style.display = "none";   
-                abnormalControlGroup.style.display = "none"; // ซ่อนเฉลยจาก Dropdown
-                examSection.style.display = "block";
-                generateRandomExam(); // สุ่มโจทย์แรกให้ทันที
-            } else {
-                examBtn.innerHTML = "🎓 เปิด Exam Mode";
-                examBtn.style.backgroundColor = "#8e44ad"; 
-                guidelineSection.style.display = "block";  
-                abnormalControlGroup.style.display = "flex"; 
-                examSection.style.display = "none";        
+        // ================= ระบบจัดการข้อสอบ =================
+        function openExamSetup() { document.getElementById('examSetupModal').style.display = 'block'; }
+        
+        // ฟังก์ชันสุ่ม Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
+            return array;
         }
 
-        // ระบบสุ่มโจทย์และพารามิเตอร์แบบอัตโนมัติ
-        function generateRandomExam() {
-            const problems = ['normal', 'autopeep', 'auto_trigger', 'double_trigger', 'premature_cycle', 'trigger_fail', 'sawtooth', 'delay_cycle', 'scoop_mild', 'scoop_severe', 'prolong'];
-            const randomAbnormal = problems[Math.floor(Math.random() * problems.length)];
+        function startExam(type) {
+            studentData.name = document.getElementById('studentName').value;
+            studentData.department = document.getElementById('department').value;
+            studentData.hospital = document.getElementById('hospital').value;
+            studentData.experience = document.getElementById('experience').value;
             
-            // แอบเซ็ตค่า Dropdown ลับๆ
-            document.getElementById('abnormalSelect').value = randomAbnormal;
+            if (!studentData.name || !studentData.department || !studentData.hospital || !studentData.experience) {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วนก่อนเริ่มสอบครับ");
+                return;
+            }
+
+            currentExamType = type;
+            currentQIndex = 0;
+            examScore = 0;
             
-            // สุ่มปั่นค่า RR เพื่อให้หลอกตา ไม่ให้กราฟซ้ำกัน
-            document.getElementById('rrSlider').value = Math.floor(Math.random() * 12) + 12; // สุ่มช่วง 12-24
-            document.getElementById('rrVal').innerText = document.getElementById('rrSlider').value;
-            
-            document.getElementById('studentAnswer').value = 'normal'; // รีเซ็ตคำตอบที่เด็กเลือก
-            
+            // ซ่อนฟอร์มและเฉลย
+            document.getElementById('examSetupModal').style.display = 'none';
+            document.getElementById('guidelineSection').style.display = 'none';
+            document.getElementById('abnormalControlGroup').style.display = 'none';
+            document.getElementById('examRunningSection').style.display = 'block';
+            document.getElementById('captureBtn').style.display = 'none';
+
+            // จัดเตรียม 10 ข้อสอบ
+            if (type === 'theory') {
+                // ทฤษฎี: ใช้ 10 โรคพอดี
+                let baseQuestions = ['normal', 'autopeep', 'auto_trigger', 'double_trigger', 'premature_cycle', 'trigger_fail', 'sawtooth', 'scoop_mild', 'prolong', 'over_assist'];
+                examQuestions = shuffleArray(baseQuestions);
+                
+                document.getElementById('theoryExamUI').style.display = 'block';
+                document.getElementById('practicalExamUI').style.display = 'none';
+                
+                // ล็อกสไลเดอร์ไม่ให้ผู้สอบขยับกราฟ
+                toggleSliders(true);
+            } else {
+                // ปฏิบัติ: สุ่มสร้าง Scenario ให้เด็กแก้
+                let practicalScenarios = [
+                    {rr: 35, ti: 1.2, mode: 'pcv', flow: 'decel'}, // Auto-PEEP
+                    {rr: 12, ti: 2.5, mode: 'pcv', flow: 'decel'}, // Prolong
+                    {rr: 15, ti: 1.0, mode: 'pcv', flow: 'sine'},  // Scoop Mild
+                    {rr: 30, ti: 1.5, mode: 'pcv', flow: 'decel'}, // Auto-PEEP
+                    {rr: 10, ti: 2.2, mode: 'pcv', flow: 'decel'}, // Prolong
+                    {rr: 18, ti: 1.0, mode: 'pcv', flow: 'sine'},  // Scoop Mild
+                    {rr: 32, ti: 1.4, mode: 'pcv', flow: 'decel'}, // Auto-PEEP
+                    {rr: 14, ti: 2.1, mode: 'pcv', flow: 'decel'}, // Prolong
+                    {rr: 28, ti: 1.5, mode: 'pcv', flow: 'decel'}, // Auto-PEEP
+                    {rr: 12, ti: 1.2, mode: 'pcv', flow: 'sine'},  // Scoop Mild
+                ];
+                examQuestions = shuffleArray(practicalScenarios);
+                
+                document.getElementById('theoryExamUI').style.display = 'none';
+                document.getElementById('practicalExamUI').style.display = 'block';
+                
+                // เปิดสไลเดอร์ให้ผู้สอบปรับแก้
+                toggleSliders(false);
+            }
+
             initAudioContext();
+            loadQuestionUI();
+        }
+
+        function toggleSliders(isDisabled) {
+            document.getElementById('modeSelect').disabled = isDisabled;
+            document.getElementById('flowSelect').disabled = isDisabled;
+            document.getElementById('rrSlider').disabled = isDisabled;
+            document.getElementById('tiSlider').disabled = isDisabled;
+            document.getElementById('piSlider').disabled = isDisabled;
+            document.getElementById('peepSlider').disabled = isDisabled;
+            document.getElementById('slopeSlider').disabled = isDisabled;
+        }
+
+        function loadQuestionUI() {
+            document.getElementById('examCounter').innerText = "ข้อที่ " + (currentQIndex + 1) + " / 10";
+            document.getElementById('studentAnswer').value = 'normal';
+
+            if (currentExamType === 'theory') {
+                let q = examQuestions[currentQIndex];
+                document.getElementById('abnormalSelect').value = q;
+                
+                if (q === 'autopeep') {
+                    document.getElementById('rrSlider').value = 35; document.getElementById('rrVal').innerText = '35';
+                    document.getElementById('tiSlider').value = 1.1; document.getElementById('tiVal').innerText = '1.1';
+                } else {
+                    document.getElementById('rrSlider').value = 15; document.getElementById('rrVal').innerText = '15';
+                    document.getElementById('tiSlider').value = 1.0; document.getElementById('tiVal').innerText = '1.0';
+                }
+                document.getElementById('modeSelect').value = 'pcv';
+                document.getElementById('flowSelect').value = 'decel';
+            } else if (currentExamType === 'practical') {
+                let q = examQuestions[currentQIndex];
+                document.getElementById('abnormalSelect').value = 'normal'; // ให้ Auto-Detect ทำงานเอง
+                document.getElementById('modeSelect').value = q.mode;
+                document.getElementById('flowSelect').value = q.flow;
+                document.getElementById('rrSlider').value = q.rr; document.getElementById('rrVal').innerText = q.rr;
+                document.getElementById('tiSlider').value = q.ti; document.getElementById('tiVal').innerText = q.ti;
+            }
+            
             switchPatientVideo();
         }
 
-        // ระบบส่งคะแนนขึ้น GAS Cloud (เพิ่มหน่วยงาน, โรงพยาบาล, อายุงาน)
-        function submitExam() {
-            const name = document.getElementById('studentName').value;
-            const department = document.getElementById('department').value;
-            const hospital = document.getElementById('hospital').value;
-            const experience = document.getElementById('experience').value;
+        function checkAnswer() {
+            let isCorrect = false;
+            let actual = currentActualAbnormal;
             
-            if (!name || !department || !hospital || !experience) {
-                alert("กรุณากรอกข้อมูลผู้สอบให้ครบถ้วนก่อนส่งคำตอบครับ");
-                return;
+            if (currentExamType === 'theory') {
+                let studentAns = document.getElementById('studentAnswer').value;
+                isCorrect = (studentAns === actual);
+            } else {
+                // สอบปฏิบัติ: ตรวจว่าพารามิเตอร์ปัจจุบัน ทำให้กราฟเป็นปกติแล้วหรือยัง
+                isCorrect = (actual === 'normal');
             }
-            
-            const studentAns = document.getElementById('studentAnswer').value;
-            const actualAns = currentActualAbnormal;
-            const isCorrect = (studentAns === actualAns);
-            
-            const btn = document.getElementById('submitExamBtn');
-            btn.innerText = "กำลังส่งข้อมูล...";
-            btn.disabled = true;
 
-            // ยิง Post Data ไปที่ Google Sheets
-            fetch(GAS_API_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({
-                    action: "saveExam",
-                    name: name,
-                    department: department,
-                    hospital: hospital,
-                    experience: experience,
-                    actual: actualAns,
-                    answered: studentAns,
-                    isCorrect: isCorrect
-                })
-            }).then(() => {
-                btn.innerText = "ส่งคำตอบ & บันทึกคะแนน";
-                btn.disabled = false;
-                showExamResult(isCorrect, actualAns);
-            }).catch(e => {
-                btn.innerText = "ส่งคำตอบ & บันทึกคะแนน";
-                btn.disabled = false;
-                showExamResult(isCorrect, actualAns);
-            });
-        }
+            if (isCorrect) examScore++;
 
-        // แสดงผลลัพธ์ข้อสอบ
-        function showExamResult(isCorrect, actualAns) {
             const titleEl = document.getElementById('answerTitle');
             const feedbackEl = document.getElementById('answerFeedback');
+            const detailsBox = document.getElementById('answerDetailsBox');
             
             if (isCorrect) {
-                titleEl.innerHTML = "✅ ถูกต้องยอดเยี่ยม!";
-                titleEl.style.color = "#27ae60";
-                feedbackEl.innerHTML = "คุณวิเคราะห์กราฟและอาการคนไข้ได้ถูกต้อง";
+                titleEl.innerHTML = "✅ ถูกต้องยอดเยี่ยม!"; titleEl.style.color = "#27ae60";
+                feedbackEl.innerHTML = (currentExamType === 'theory') ? "คุณวิเคราะห์กราฟถูกต้อง" : "คุณปรับแก้พารามิเตอร์ได้ถูกต้อง กราฟกลับมาปกติแล้ว!";
                 feedbackEl.style.color = "#27ae60";
+                detailsBox.style.display = 'block';
             } else {
-                titleEl.innerHTML = "❌ ยังไม่ถูกต้อง";
-                titleEl.style.color = "#c0392b";
-                
-                const selectEl = document.getElementById('studentAnswer');
-                let correctText = "";
-                for(let i=0; i<selectEl.options.length; i++) {
-                    if(selectEl.options[i].value === actualAns) {
-                        correctText = selectEl.options[i].text; break;
-                    }
-                }
-                feedbackEl.innerHTML = "คำตอบที่ถูกต้องคือ: " + correctText;
+                titleEl.innerHTML = "❌ ยังไม่ถูกต้อง"; titleEl.style.color = "#c0392b";
                 feedbackEl.style.color = "#c0392b";
+                detailsBox.style.display = 'block';
+                
+                if (currentExamType === 'theory') {
+                    const selectEl = document.getElementById('studentAnswer');
+                    let correctText = "";
+                    for(let i=0; i<selectEl.options.length; i++) {
+                        if(selectEl.options[i].value === actual) { correctText = selectEl.options[i].text; break; }
+                    }
+                    feedbackEl.innerHTML = "คำตอบที่ถูกต้องคือ: " + correctText;
+                } else {
+                    feedbackEl.innerHTML = "พารามิเตอร์ยังไม่สมดุล กราฟยังคงมีปัญหาอยู่";
+                }
             }
 
             document.getElementById('answerWaveDesc').innerText = currentWaveDesc;
             document.getElementById('answerGuide').innerText = currentGuideTxt;
+            
+            let nextBtn = document.getElementById('nextQuestionBtn');
+            if (currentQIndex === 9) {
+                nextBtn.innerText = "ส่งกระดาษคำตอบ และดูคะแนนรวม";
+                nextBtn.style.backgroundColor = "#27ae60";
+            } else {
+                nextBtn.innerText = "ข้อถัดไป ➡️";
+                nextBtn.style.backgroundColor = "#8e44ad";
+            }
+
             document.getElementById('answerModal').style.display = 'block';
         }
+
+        function loadNextQuestion() {
+            document.getElementById('answerModal').style.display = 'none';
+            currentQIndex++;
+            
+            if (currentQIndex < 10) {
+                loadQuestionUI();
+            } else {
+                finishExam();
+            }
+        }
+
+        function finishExam() {
+            const titleEl = document.getElementById('answerTitle');
+            const feedbackEl = document.getElementById('answerFeedback');
+            
+            titleEl.innerHTML = "🎯 สอบเสร็จสิ้น!";
+            titleEl.style.color = "#2c3e50";
+            feedbackEl.innerHTML = `คุณทำคะแนนได้: <span style="font-size:32px; color:#27ae60; display:block; margin-top:10px;">${examScore} / 10</span><br><span style="font-size:14px; color:#7f8c8d;">ระบบกำลังบันทึกคะแนนลงฐานข้อมูล...</span>`;
+            
+            document.getElementById('answerDetailsBox').style.display = 'none';
+            
+            let nextBtn = document.getElementById('nextQuestionBtn');
+            nextBtn.innerText = "กำลังบันทึก...";
+            nextBtn.disabled = true;
+            nextBtn.style.backgroundColor = "#7f8c8d";
+            document.getElementById('answerModal').style.display = 'block';
+
+            // ส่งข้อมูลไปเก็บ
+            let examTypeName = (currentExamType === 'theory') ? 'สอบทฤษฎี' : 'สอบปฏิบัติ';
+            fetch(GAS_API_URL, {
+                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: "saveScore", name: studentData.name, department: studentData.department,
+                    hospital: studentData.hospital, experience: studentData.experience,
+                    examType: examTypeName, score: examScore
+                })
+            }).then(() => {
+                nextBtn.innerText = "กลับสู่หน้าหลัก";
+                nextBtn.disabled = false;
+                nextBtn.style.backgroundColor = "#34495e";
+                nextBtn.onclick = resetApp;
+            }).catch(e => {
+                nextBtn.innerText = "กลับสู่หน้าหลัก (ออฟไลน์)";
+                nextBtn.disabled = false;
+                nextBtn.onclick = resetApp;
+            });
+        }
+
+        // =================================================
 
         function handleModeFlowChange() {
             initAudioContext();
@@ -450,8 +586,8 @@
         }
 
         function checkAutoAsynchrony() {
-            // ปิดฟังก์ชัน Auto Override ชั่วคราวเวลาอยู่ในโหมดสอบ เพื่อไม่ให้โรคที่สุ่มไว้พัง
-            if (isExamMode) return;
+            // ปิด Override ถ้าเป็นการสอบทฤษฎี เพื่อไม่ให้โจทย์พังตอนล็อกกราฟ
+            if (currentExamType === 'theory') return;
 
             let rr = parseInt(document.getElementById('rrSlider').value);
             let tiSetting = parseFloat(document.getElementById('tiSlider').value);
@@ -462,42 +598,40 @@
             let currentState = dropdown.value;
 
             if (currentState === 'normal' || currentState === 'autopeep' || currentState === 'prolong') {
-                if (teTimeSec < 0.65) {
-                    dropdown.value = 'autopeep'; 
-                } else if (rr <= 15 && tiSetting >= 2.0) {
-                    dropdown.value = 'prolong';  
-                } else {
-                    dropdown.value = 'normal';
-                }
+                if (teTimeSec < 0.65) { dropdown.value = 'autopeep'; } 
+                else if (rr <= 15 && tiSetting >= 2.0) { dropdown.value = 'prolong'; } 
+                else { dropdown.value = 'normal'; }
             }
         }
 
         function resetApp() {
+            currentExamType = 'none';
+            document.getElementById('examRunningSection').style.display = 'none';
+            document.getElementById('guidelineSection').style.display = 'block';
+            document.getElementById('abnormalControlGroup').style.display = 'flex';
+            document.getElementById('captureBtn').style.display = 'block';
+            document.getElementById('answerModal').style.display = 'none';
+            
+            toggleSliders(false); // ปลดล็อกปุ่มทั้งหมด
+
             document.getElementById('modeSelect').value = 'pcv';
             document.getElementById('flowSelect').value = 'decel';
             document.getElementById('abnormalSelect').value = 'normal';
-            document.getElementById('rrSlider').value = 15;
-            document.getElementById('rrVal').innerText = '15';
-            document.getElementById('tiSlider').value = 1.0;
-            document.getElementById('tiVal').innerText = '1.0';
-            document.getElementById('piSlider').value = 15;
-            document.getElementById('piVal').innerText = '15';
-            document.getElementById('peepSlider').value = 5;
-            document.getElementById('peepVal').innerText = '5';
-            document.getElementById('slopeSlider').value = 0;
-            document.getElementById('slopeVal').innerText = '0';
+            document.getElementById('rrSlider').value = 15; document.getElementById('rrVal').innerText = '15';
+            document.getElementById('tiSlider').value = 1.0; document.getElementById('tiVal').innerText = '1.0';
+            document.getElementById('piSlider').value = 15; document.getElementById('piVal').innerText = '15';
+            document.getElementById('peepSlider').value = 5; document.getElementById('peepVal').innerText = '5';
+            document.getElementById('slopeSlider').value = 0; document.getElementById('slopeVal').innerText = '0';
             
-            if (isExamMode) toggleExamMode(); 
-            document.getElementById('studentAnswer').value = 'normal'; 
+            // รีเซ็ตปุ่มใน Modal
+            let nextBtn = document.getElementById('nextQuestionBtn');
+            nextBtn.onclick = loadNextQuestion;
+            
             switchPatientVideo();
         }
 
         function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
         function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('guideModal')) { closeGuide(); }
-            if (event.target == document.getElementById('answerModal')) { document.getElementById('answerModal').style.display = 'none'; }
-        }
         
         function switchPatientVideo() {
             const mode = document.getElementById('modeSelect').value;
@@ -510,7 +644,6 @@
                 if (mode === 'pcv' && flowType === 'sine') videoKey = 'scoop_mild'; 
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist'; 
             }
-            
             let targetSrc = patientVideos[videoKey];
             if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
                 videoEl.src = targetSrc;
@@ -525,24 +658,14 @@
                 if(data.status === "success") {
                     document.getElementById('modeSelect').value = data.defaultSettings.mode;
                     document.getElementById('flowSelect').value = data.defaultSettings.flowType;
-                    document.getElementById('rrSlider').value = data.defaultSettings.rr;
-                    document.getElementById('rrVal').innerText = data.defaultSettings.rr;
-                    document.getElementById('tiSlider').value = data.defaultSettings.ti;
-                    document.getElementById('tiVal').innerText = parseFloat(data.defaultSettings.ti).toFixed(1);
-                    document.getElementById('piSlider').value = data.defaultSettings.pi;
-                    document.getElementById('piVal').innerText = data.defaultSettings.pi;
-                    document.getElementById('slopeSlider').value = data.defaultSettings.slope;
-                    document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
-                    if(data.defaultSettings.peep) {
-                        document.getElementById('peepSlider').value = data.defaultSettings.peep;
-                        document.getElementById('peepVal').innerText = data.defaultSettings.peep;
-                    }
+                    document.getElementById('rrSlider').value = data.defaultSettings.rr; document.getElementById('rrVal').innerText = data.defaultSettings.rr;
+                    document.getElementById('tiSlider').value = data.defaultSettings.ti; document.getElementById('tiVal').innerText = parseFloat(data.defaultSettings.ti).toFixed(1);
+                    document.getElementById('piSlider').value = data.defaultSettings.pi; document.getElementById('piVal').innerText = data.defaultSettings.pi;
+                    document.getElementById('slopeSlider').value = data.defaultSettings.slope; document.getElementById('slopeVal').innerText = data.defaultSettings.slope;
+                    if(data.defaultSettings.peep) { document.getElementById('peepSlider').value = data.defaultSettings.peep; document.getElementById('peepVal').innerText = data.defaultSettings.peep; }
                 }
             } catch (error) {} 
-            finally { 
-                checkAutoAsynchrony(); 
-                switchPatientVideo(); 
-            }
+            finally { checkAutoAsynchrony(); switchPatientVideo(); }
         }
 
         window.onload = fetchSettingsFromGAS;
@@ -580,8 +703,7 @@
             document.getElementById('ieRatio').innerText = "I:E = 1:" + (teTimeSec / tiSetting).toFixed(1);
 
             let isAutoDetected = false;
-            // เปิดระบบ Auto-Detect เฉพาะตอนที่ไม่ได้อยู่ในโหมดสอบ
-            if (!isExamMode && abnormal === 'normal') {
+            if (currentExamType !== 'theory' && abnormal === 'normal') {
                 if (teTimeSec < 0.65) { abnormal = 'autopeep'; isAutoDetected = true; }
                 if (rr <= 15 && tiSetting >= 2.0) { abnormal = 'prolong'; isAutoDetected = true; }
             }
@@ -771,8 +893,8 @@
             currentWaveDesc = waveDesc;
             currentGuideTxt = guideTxt;
 
-            if (isExamMode) {
-                statusTextEl.innerText = "❓ โหมดทดสอบ (โปรดวิเคราะห์กราฟด้วยตนเอง)";
+            if (currentExamType !== 'none') {
+                statusTextEl.innerText = "❓ โหมดสอบ: โปรดวิเคราะห์และแก้ไขปัญหา";
                 statusTextEl.style.color = "#8e44ad"; 
             } else {
                 statusTextEl.innerText = txt; 
