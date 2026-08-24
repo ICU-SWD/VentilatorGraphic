@@ -32,6 +32,9 @@
         .main-display { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; justify-content: center; margin-bottom: 20px; }
 
         .clinical-panel { background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; width: 320px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); }
+        .graph-column { display: flex; flex-direction: column; width: 100%; max-width: 850px; background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 10px; padding: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+        .graph-legend { display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center; margin-top: 12px; font-size: 13px; color: #2c3e50; }
+        .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
         .clinical-title { font-weight: bold; color: #2c3e50; font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; text-transform: uppercase; }
 
         .bed-scene { position: relative; width: 100%; height: 200px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.1); border: 2px solid #bdc3c7; }
@@ -157,7 +160,7 @@
             </div>
 
             <!-- ส่วนของกราฟและ Alarm Bar -->
-            <div style="display: flex; flex-direction: column; width: 100%; max-width: 850px;">
+            <div class="graph-column">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; height: 30px; width: 100%;">
                     <div id="topAlarmLight" class="alarm-indicator">
                         <span style="font-size: 16px;">🚨</span> ALARM
@@ -166,6 +169,11 @@
                 </div>
 
                 <canvas id="ventCanvas" width="850" height="380"></canvas>
+
+                <div class="graph-legend">
+                    <span><span class="legend-dot" style="background:#f1c40f;"></span>Paw — แรงดันในทางเดินหายใจ (cmH2O)</span>
+                    <span><span class="legend-dot" style="background:#2ecc71;"></span>Flow — อัตราการไหลของอากาศ (L/min)</span>
+                </div>
             </div>
         </div>
 
@@ -187,7 +195,7 @@
 
             <div id="abnormalControlGroup" class="control-group" style="align-items: flex-start; flex: 1 1 200px;">
                 <label for="abnormalSelect">Asynchrony & Alarms (จำลอง)</label>
-                <select id="abnormalSelect" onchange="switchPatientVideo()">
+                <select id="abnormalSelect" onchange="handleAbnormalSelectChange()">
                     <option value="normal">ปกติ (Normal)</option>
                     <option value="autopeep">ลมค้าง (Auto-PEEP)</option>
                     <option value="auto_trigger">เครื่องตีเอง (Auto-Triggering / Leak)</option>
@@ -200,6 +208,7 @@
                     <option value="scoop_severe">Pressure Scooped out (Severe)</option>
                     <option value="prolong">ฝืนหายใจออก (Prolonged Ti)</option>
                 </select>
+                <button id="resetGraphBtn" class="top-btn" style="background:#95a5a6; width:100%; margin-top: 12px;" onclick="resetGraphOnly()">🔄 รีเซ็ตกราฟ (Reset)</button>
             </div>
 
             <!-- ปุ่ม Intervention สำหรับแก้ปัญหา -->
@@ -227,7 +236,7 @@
                 <label for="piSlider">Pressure</label>
                 <div class="ppeak-badge" id="ppeakDisplay">Ppeak: 20</div>
                 <div class="digital-value" id="piVal">15</div>
-                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value; initAudioContext();">
+                <input type="range" id="piSlider" min="5" max="30" value="15" oninput="document.getElementById('piVal').innerText = this.value; checkAutoAsynchrony(); switchPatientVideo(); initAudioContext();">
             </div>
 
             <div class="control-group">
@@ -281,6 +290,7 @@
 
             <div id="saveStatusLine" class="save-status-line"></div>
             <a id="backupDownloadLink" class="backup-link" style="display:none;" href="#" download="exam_backup.json">💾 ดาวน์โหลดผลสอบสำรอง</a>
+            <button id="exportPdfBtn" class="top-btn" style="display:none; background:#c0392b; width:100%; margin-top: 10px;" onclick="exportResultPDF()">📄 พิมพ์ / บันทึกผลสอบเป็น PDF</button>
 
             <button id="nextQuestionBtn" class="top-btn btn-exam" style="margin-top: 20px; width: 100%; font-size: 16px; padding: 10px;" onclick="loadNextQuestion()">ข้อถัดไป ➡️</button>
         </div>
@@ -364,6 +374,7 @@
         let examScore = 0;
         let examQuestions = [];
         let examDetailsLog = [];
+        let examDetailsData = []; // ข้อมูลแบบมีโครงสร้างของแต่ละข้อ ใช้สำหรับสร้างรายงาน PDF พร้อมเฉลย
         let studentData = {};
         let currentSubmissionId = null;
 
@@ -371,6 +382,10 @@
         let currentWaveDesc = '';
         let currentGuideTxt = '';
         let actionTaken = '';
+
+        // ค่าพารามิเตอร์ ณ จุดเริ่มต้นของสถานการณ์ผิดปกติปัจจุบัน ใช้เป็นฐานคำนวณว่า "ปรับเพิ่ม/ลดพอหรือยัง"
+        // เพื่อให้ต้องปรับพารามิเตอร์อย่างมีนัยสำคัญจริงๆ ถึงจะถือว่าแก้ไขสำเร็จ (ไม่ใช่แค่ขยับ 1 หน่วยแล้วผ่านพอดี)
+        let scenarioBaseline = { rr: 15, ti: 1.0, pi: 15 };
 
         let audioCtx = null;
         let alarmInterval = null;
@@ -433,11 +448,29 @@
             actionTaken = type;
 
             if (currentExamType === 'none') {
-                let drop = document.getElementById('abnormalSelect');
-                if (type === 'suction' && drop.value === 'sawtooth') drop.value = 'normal';
-                if (type === 'fix_leak' && drop.value === 'auto_trigger') drop.value = 'normal';
+                // ใช้ตรรกะเดียวกับโหมดสอบปฏิบัติ: ถ้าการพยาบาลนี้แก้ปัญหาที่กำลังเลือกอยู่ได้ ให้กราฟกลับเป็นปกติทันที
+                checkAutoAsynchrony();
                 switchPatientVideo();
             }
+        }
+
+        // บันทึกค่าพารามิเตอร์ปัจจุบันไว้เป็น "จุดเริ่มต้น" ของสถานการณ์ผิดปกติ เพื่อคำนวณว่าปรับเพิ่ม/ลดมากพอหรือยัง
+        function captureBaseline() {
+            scenarioBaseline = {
+                rr: parseInt(document.getElementById('rrSlider').value),
+                ti: parseFloat(document.getElementById('tiSlider').value),
+                pi: parseInt(document.getElementById('piSlider').value)
+            };
+        }
+
+        // ทำงานเมื่อผู้สอนเลือกภาวะผิดปกติใหม่จาก dropdown ในโหมดจำลอง (สอน)
+        function handleAbnormalSelectChange() {
+            const val = document.getElementById('abnormalSelect').value;
+            actionTaken = '';
+            if (currentExamType === 'none' && val !== 'normal') {
+                captureBaseline();
+            }
+            switchPatientVideo();
         }
 
         // ================= Utility: submission id / backup =================
@@ -512,7 +545,9 @@
             currentQIndex = 0;
             examScore = 0;
             examDetailsLog = [];
+            examDetailsData = [];
             currentSubmissionId = null;
+            document.getElementById('exportPdfBtn').style.display = 'none';
 
             document.getElementById('examSetupModal').style.display = 'none';
             document.getElementById('guidelineSection').style.display = 'none';
@@ -570,25 +605,33 @@
                 document.getElementById('rrSlider').value = q.init.rr; document.getElementById('rrVal').innerText = q.init.rr;
                 document.getElementById('tiSlider').value = q.init.ti; document.getElementById('tiVal').innerText = q.init.ti;
                 document.getElementById('piSlider').value = q.init.pi; document.getElementById('piVal').innerText = q.init.pi;
+                scenarioBaseline = { rr: q.init.rr, ti: q.init.ti, pi: q.init.pi };
             }
 
             switchPatientVideo();
         }
 
-        function checkPracticalFixed(q) {
+        // ฟังก์ชันกลาง เช็คว่า "ภาวะผิดปกติ" ถูกแก้ไขแล้วหรือยัง จากค่าพารามิเตอร์/การพยาบาลปัจจุบัน
+        // ใช้ร่วมกันทั้งโหมดสอบปฏิบัติ และโหมดจำลอง (สอน) เพื่อให้ผู้สอนปรับพารามิเตอร์แก้ไขกราฟได้เช่นเดียวกับผู้เข้าสอบ
+        function isAbnormalResolved(abnormalId) {
             let rr = parseInt(document.getElementById('rrSlider').value);
             let ti = parseFloat(document.getElementById('tiSlider').value);
             let pi = parseInt(document.getElementById('piSlider').value);
             let te = (60/rr) - ti;
+            let base = scenarioBaseline;
 
-            if (q.id === 'autopeep' && te >= 0.65) return true;
-            if (q.id === 'prolong' && ti < 2.0) return true;
-            if (q.id === 'double_trigger' && (pi >= 20 || ti >= 1.2)) return true;
-            if (q.id === 'premature_cycle' && ti >= 1.0) return true;
-            if (q.id === 'scoop_mild' && pi >= 20) return true;
-            if (q.id === 'sawtooth' && actionTaken === 'suction') return true;
-            if (q.id === 'auto_trigger' && actionTaken === 'fix_leak') return true;
+            if (abnormalId === 'autopeep' && te >= 0.65) return true;
+            if (abnormalId === 'prolong' && ti < 2.0) return true;
+            if (abnormalId === 'double_trigger' && (pi >= base.pi + 3 || ti >= base.ti + 0.5)) return true;
+            if (abnormalId === 'premature_cycle' && ti >= base.ti + 0.4) return true;
+            if (abnormalId === 'scoop_mild' && pi >= base.pi + 3) return true;
+            if (abnormalId === 'sawtooth' && actionTaken === 'suction') return true;
+            if (abnormalId === 'auto_trigger' && actionTaken === 'fix_leak') return true;
             return false;
+        }
+
+        function checkPracticalFixed(q) {
+            return isAbnormalResolved(q.id);
         }
 
         function checkAnswer() {
@@ -624,6 +667,15 @@
             }
 
             examDetailsLog.push(`ข้อ ${currentQIndex+1}: [โจทย์: ${actualName}] -> [ผล: ${studentActionLog}]`);
+
+            examDetailsData.push({
+                no: currentQIndex + 1,
+                question: actualName,
+                studentAnswer: studentActionLog.replace(/^✅ |^❌ /, ''),
+                isCorrect: isCorrect,
+                solution: q.solution
+            });
+
             if (isCorrect) examScore++;
 
             const titleEl = document.getElementById('answerTitle');
@@ -642,6 +694,7 @@
             document.getElementById('saveStatusLine').innerText = '';
             document.getElementById('saveStatusLine').className = 'save-status-line';
             document.getElementById('backupDownloadLink').style.display = 'none';
+            document.getElementById('exportPdfBtn').style.display = 'none';
 
             let nextBtn = document.getElementById('nextQuestionBtn');
             nextBtn.disabled = false;
@@ -683,6 +736,7 @@
 
             document.getElementById('answerDetailsBox').style.display = 'none';
             document.getElementById('backupDownloadLink').style.display = 'none';
+            document.getElementById('exportPdfBtn').style.display = 'block';
 
             let nextBtn = document.getElementById('nextQuestionBtn');
             nextBtn.innerText = "กำลังบันทึกผลสอบ...";
@@ -773,6 +827,88 @@
             }
         }
 
+        // สร้างรายงานผลสอบพร้อมเฉลยในหน้าต่างใหม่ แล้วเปิดหน้าต่างพิมพ์ของเบราว์เซอร์ให้ผู้ใช้เลือก "บันทึกเป็น PDF"
+        // ใช้วิธีนี้แทนไลบรารีสร้าง PDF โดยตรง เพื่อให้แสดงผลภาษาไทยได้ถูกต้องแน่นอนผ่าน font ของเบราว์เซอร์เอง
+        function exportResultPDF() {
+            const win = window.open('', '_blank');
+            if (!win) {
+                alert('เบราว์เซอร์บล็อกป๊อปอัพ กรุณาอนุญาตป๊อปอัพสำหรับเว็บนี้ แล้วลองกดดาวน์โหลด PDF อีกครั้ง');
+                return;
+            }
+
+            const examTypeName = (currentExamType === 'theory') ? 'สอบทฤษฎี (วิเคราะห์กราฟ)' : 'สอบปฏิบัติ (แก้ไขสถานการณ์)';
+            const dateStr = new Date().toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short' });
+
+            let rowsHtml = examDetailsData.map(function (d) {
+                return `
+                    <tr>
+                        <td style="text-align:center;">${d.no}</td>
+                        <td>${d.question}</td>
+                        <td style="text-align:center; color:${d.isCorrect ? '#27ae60' : '#c0392b'}; font-weight:bold;">${d.isCorrect ? 'ถูกต้อง ✅' : 'ไม่ถูกต้อง ❌'}</td>
+                        <td>${d.studentAnswer}</td>
+                        <td>${d.solution}</td>
+                    </tr>`;
+            }).join('');
+
+            const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ผลสอบ - ${studentData.name || ''}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    body { font-family: 'Sarabun', sans-serif; color:#2c3e50; padding: 30px; }
+    h1 { text-align:center; color:#2c3e50; margin-bottom: 4px; }
+    .subtitle { text-align:center; color:#7f8c8d; margin-bottom: 20px; }
+    .info-box { display:flex; flex-wrap:wrap; gap: 8px 30px; background:#f8f9fa; border:1px solid #dcdde1; border-radius:8px; padding: 15px 20px; margin-bottom: 20px; }
+    .info-box div { font-size: 14px; }
+    .score-box { text-align:center; font-size: 22px; font-weight: bold; color:#27ae60; margin-bottom: 20px; }
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #dcdde1; padding: 8px 10px; vertical-align: top; }
+    th { background:#34495e; color:white; }
+    tr:nth-child(even) { background:#f8f9fa; }
+    @media print { body { padding: 10px; } }
+</style>
+</head>
+<body>
+    <h1>รายงานผลการทดสอบ Ventilator Graphics Simulator</h1>
+    <div class="subtitle">${examTypeName} | ออกรายงานเมื่อ ${dateStr}</div>
+
+    <div class="info-box">
+        <div><b>ชื่อ-สกุล:</b> ${studentData.name || '-'}</div>
+        <div><b>หน่วยงาน:</b> ${studentData.department || '-'}</div>
+        <div><b>โรงพยาบาล:</b> ${studentData.hospital || '-'}</div>
+        <div><b>อายุงาน:</b> ${studentData.experience || '-'} ปี</div>
+    </div>
+
+    <div class="score-box">คะแนนที่ได้: ${examScore} / ${examQuestions.length}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:5%;">ข้อ</th>
+                <th style="width:22%;">โจทย์ / สถานการณ์</th>
+                <th style="width:12%;">ผล</th>
+                <th style="width:26%;">คำตอบ / การแก้ไขของผู้เข้าสอบ</th>
+                <th style="width:35%;">เฉลย และเหตุผลที่ถูกต้อง</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rowsHtml}
+        </tbody>
+    </table>
+</body>
+</html>`;
+
+            win.document.open();
+            win.document.write(html);
+            win.document.close();
+
+            win.onload = function () {
+                setTimeout(function () { win.focus(); win.print(); }, 300);
+            };
+        }
+
         function handleModeFlowChange() {
             initAudioContext();
             const mode = document.getElementById('modeSelect').value;
@@ -799,11 +935,35 @@
             let dropdown = document.getElementById('abnormalSelect');
             let currentState = dropdown.value;
 
+            // ถ้าผู้สอนกำลังจำลองภาวะผิดปกติที่แก้ไขได้ด้วยพารามิเตอร์/การพยาบาลอยู่ และแก้ไขสำเร็จแล้ว ให้กราฟกลับเป็นปกติทันที
+            // (ใช้ตรรกะเดียวกับที่ผู้เข้าสอบใช้ในโหมดสอบปฏิบัติ)
+            if (currentState !== 'normal' && isAbnormalResolved(currentState)) {
+                dropdown.value = 'normal';
+                currentState = 'normal';
+            }
+
             if (currentState === 'normal' || currentState === 'autopeep' || currentState === 'prolong') {
                 if (teTimeSec < 0.65) { dropdown.value = 'autopeep'; }
                 else if (rr <= 15 && tiSetting >= 2.0) { dropdown.value = 'prolong'; }
                 else { dropdown.value = 'normal'; }
             }
+        }
+
+        function resetGraphOnly() {
+            // ปุ่มรีเซ็ตกราฟด่วนสำหรับโหมดจำลอง (ไม่กระทบข้อมูลโหมดสอบ)
+            if (currentExamType !== 'none') return;
+            initAudioContext();
+            actionTaken = '';
+            document.getElementById('modeSelect').value = 'pcv';
+            document.getElementById('flowSelect').value = 'decel';
+            document.getElementById('abnormalSelect').value = 'normal';
+            document.getElementById('rrSlider').value = 15; document.getElementById('rrVal').innerText = '15';
+            document.getElementById('tiSlider').value = 1.0; document.getElementById('tiVal').innerText = '1.0';
+            document.getElementById('piSlider').value = 15; document.getElementById('piVal').innerText = '15';
+            document.getElementById('peepSlider').value = 5; document.getElementById('peepVal').innerText = '5';
+            document.getElementById('slopeSlider').value = 0; document.getElementById('slopeVal').innerText = '0';
+            scenarioBaseline = { rr: 15, ti: 1.0, pi: 15 };
+            switchPatientVideo(true);
         }
 
         function resetApp() {
@@ -814,6 +974,9 @@
             }
 
             currentExamType = 'none';
+            actionTaken = '';
+            examDetailsData = [];
+            scenarioBaseline = { rr: 15, ti: 1.0, pi: 15 };
             document.getElementById('examRunningSection').style.display = 'none';
             document.getElementById('guidelineSection').style.display = 'block';
             document.getElementById('abnormalControlGroup').style.display = 'flex';
@@ -821,6 +984,7 @@
             document.getElementById('examModeBtn').style.display = 'block';
             document.getElementById('answerModal').style.display = 'none';
             document.getElementById('backupDownloadLink').style.display = 'none';
+            document.getElementById('exportPdfBtn').style.display = 'none';
             setSaveStatus('', '');
 
             toggleSliders(false);
@@ -852,7 +1016,7 @@
         function openGuide() { document.getElementById('guideModal').style.display = 'block'; }
         function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
 
-        function switchPatientVideo() {
+        function switchPatientVideo(force) {
             const mode = document.getElementById('modeSelect').value;
             const flowType = document.getElementById('flowSelect').value;
             const abnormalState = document.getElementById('abnormalSelect').value;
@@ -864,7 +1028,7 @@
                 else if (mode === 'psv' && flowType === 'decel') videoKey = 'over_assist';
             }
             let targetSrc = patientVideos[videoKey];
-            if (targetSrc && !videoEl.src.endsWith(targetSrc)) {
+            if (targetSrc && (force || !videoEl.src.endsWith(targetSrc))) {
                 videoEl.src = targetSrc;
                 videoEl.play().catch(e => {});
             }
@@ -914,6 +1078,111 @@
             guidelineText: document.getElementById('guidelineText'),
             waveformDescText: document.getElementById('waveformDescText')
         };
+
+        // ================= ลูกศรชี้จุดผิดปกติ (โหมดจำลอง/สอน เท่านั้น) =================
+        // สำหรับแต่ละภาวะผิดปกติ: จุดสังเกตอยู่ที่ "เวลา" ใดในรอบการหายใจ (0 = เริ่มหายใจเข้า, drawTiLength = เริ่มหายใจออก, cycleLength = จบรอบ)
+        // และอยู่ที่ตำแหน่ง y โดยประมาณบนกราฟ (ใช้ชี้เป้าคร่าวๆ ให้ผู้เรียนสังเกต ไม่จำเป็นต้องตรงเส้นเป๊ะ)
+        // แต่ละภาวะมีลูกศรได้มากกว่า 1 อัน (array) และเลือก style ทิศทางลูกศรได้: 'down' (ปกติ, ชี้จากบนลงล่าง),
+        // 'up' (ชี้จากล่างขึ้นบน), 'fromTop' (ลูกศรยาวจากขอบบนสุดของกราฟชี้ลงมา)
+        const abnormalMarkers = {
+            autopeep: [
+                { label: 'Flow ไม่กลับสู่ 0 ก่อนหายใจเข้ารอบใหม่', getTime: (cyc, ti) => cyc - 8, y: 305, style: 'up' }
+            ],
+            auto_trigger: [
+                { label: 'Flow ไม่กลับสู่ 0 + หายใจถี่ผิดปกติ', getTime: (cyc, ti) => cyc - 8, y: 280 }
+            ],
+            double_trigger: [
+                { label: 'Pressure หายใจ 2 รอบซ้อนกัน', getTime: (cyc, ti) => ti * 1.5, y: 100 },
+                { label: 'Flow พุ่งซ้ำในรอบเดียว', getTime: (cyc, ti) => ti * 1.5, y: 235 }
+            ],
+            premature_cycle: [
+                { label: 'Flow ตีกลับ เครื่องตัดเร็วเกินไป', getTime: (cyc, ti) => ti + 10, y: 250 }
+            ],
+            trigger_fail: [
+                { label: 'Flow ขยับตอนผู้ป่วยพยายามหายใจ', getTime: (cyc, ti) => cyc * 0.7, y: 305 },
+                { label: 'Pressure ยุบเล็กน้อยตอนออกแรง', getTime: (cyc, ti) => cyc * 0.7, y: 155 }
+            ],
+            sawtooth: [
+                { label: 'กราฟสั่นฟันเลื่อย (น้ำ/เสมหะในสาย)', getTime: (cyc, ti) => ti * 0.5, y: 205 }
+            ],
+            delay_cycle: [
+                { label: 'Pressure พุ่งช่วงท้าย Ti', getTime: (cyc, ti) => ti - 15, y: 95 }
+            ],
+            scoop_mild: [
+                { label: 'Pressure เว้าแหว่ง (ผู้ป่วยออกแรงเอง)', getTime: (cyc, ti) => ti * 0.5, y: 160, style: 'up' }
+            ],
+            scoop_severe: [
+                { label: 'Pressure เว้าลึก (ออกแรงมาก)', getTime: (cyc, ti) => ti * 0.5, y: 168, style: 'up' }
+            ],
+            prolong: [
+                { label: 'Pressure สูงขึ้นช่วงท้าย Ti (ฝืนหายใจออก)', getTime: (cyc, ti) => ti - 10, y: 100 }
+            ]
+        };
+
+        // หาตำแหน่ง x บนหน้าจอ ณ เฟรมปัจจุบัน ที่สอดคล้องกับ "เวลา" ที่ต้องการภายในรอบการหายใจ (กราฟเลื่อนตลอดเวลาจึงต้องคำนวณใหม่ทุกเฟรม)
+        function findMarkerX(markerTime, cycleLen, xOff, canvasW) {
+            let base = ((markerTime + xOff - canvasW - 100) % cycleLen + cycleLen) % cycleLen;
+            let desired = canvasW * 0.62;
+            let x = base + cycleLen * Math.round((desired - base) / cycleLen);
+            if (x < 60) x += cycleLen;
+            if (x > canvasW - 60) x -= cycleLen;
+            return x;
+        }
+
+        function drawAbnormalMarker(x, y, text, style) {
+            ctx.save();
+            ctx.fillStyle = '#ff3b3b';
+            ctx.strokeStyle = '#ff3b3b';
+            ctx.lineWidth = 2.5;
+            ctx.font = 'bold 12px Sarabun, Arial';
+            ctx.textAlign = 'center';
+            let labelX = Math.min(Math.max(x, 95), canvas.width - 95);
+
+            if (style === 'up') {
+                // ลูกศรจากล่างชี้ขึ้นบน: หัวลูกศรอยู่ใกล้จุดเป้าหมาย ด้ามอยู่ด้านล่าง
+                const tailY = y + 28;
+                ctx.beginPath();
+                ctx.moveTo(x, tailY);
+                ctx.lineTo(x, y + 6);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x - 6, y + 12);
+                ctx.lineTo(x, y + 2);
+                ctx.lineTo(x + 6, y + 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillText(text, labelX, Math.min(tailY + 16, canvas.height - 6));
+            } else if (style === 'fromTop') {
+                // ลูกศรยาวจากขอบบนสุดของกราฟ ชี้ลงมาที่จุดเป้าหมาย
+                const topY = 14;
+                ctx.beginPath();
+                ctx.moveTo(x, topY);
+                ctx.lineTo(x, y - 6);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x - 6, y - 12);
+                ctx.lineTo(x, y - 2);
+                ctx.lineTo(x + 6, y - 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillText(text, labelX, topY + 12);
+            } else {
+                // ค่าเริ่มต้น: ลูกศรสั้นจากด้านบนชี้ลงมาที่จุดเป้าหมาย
+                const topY = y - 28;
+                ctx.beginPath();
+                ctx.moveTo(x, topY);
+                ctx.lineTo(x, y - 6);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x - 6, y - 12);
+                ctx.lineTo(x, y - 2);
+                ctx.lineTo(x + 6, y - 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillText(text, labelX, Math.max(topY - 6, 14));
+            }
+            ctx.restore();
+        }
 
         function drawWaveform() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1043,6 +1312,15 @@
 
             ctx.fillStyle = '#f1c40f'; ctx.font = '16px Arial'; ctx.fillText('Paw (cmH2O)', 10, 25);
             ctx.fillStyle = '#2ecc71'; ctx.fillText('Flow (L/min)', 10, 175);
+
+            // ชี้จุดผิดปกติด้วยลูกศร เฉพาะโหมดจำลอง/สอน (ไม่ใช่ระหว่างสอบ) เพื่อช่วยให้ผู้เรียนสังเกตกราฟได้ง่ายขึ้น
+            if (currentExamType === 'none' && abnormalMarkers[abnormal]) {
+                abnormalMarkers[abnormal].forEach(function (marker) {
+                    const mTime = marker.getTime(cycleLength, drawTiLength);
+                    const mx = findMarkerX(mTime, cycleLength, xOffset, canvas.width);
+                    drawAbnormalMarker(mx, marker.y, marker.label, marker.style);
+                });
+            }
 
             let rightEdgeTime = ((canvas.width - 1 - xOffset + canvas.width + 100) % cycleLength);
             let phase = rightEdgeTime < drawTiLength ? 'Insp' : 'Exp';
